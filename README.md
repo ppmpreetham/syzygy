@@ -1,17 +1,15 @@
-# Create Zopra App
+# Syzygy
+
+Syzygy (sĭz′ə-jē) noun : an alignment of three celestial bodies
 
 <p align="center">
-  <img src="assets/Zopra.svg" width="300px" alt="Zopra Logo"/>
+  <img src="" width="300px" alt="Syzygy Logo"/>
 </p>
 
 <h1 align="center">
-  Create Zopra App
+  Syzygy
 </h1>
 
 <p align="center">
-  Creates a clean [zopra](https://www.github.com/ppmpreetham/zopra) app.
+   A modern alternative to Burp Suite
 </p>
-
-```bash
-cargo generate ppmpreetham/create-zopra-app
-```
