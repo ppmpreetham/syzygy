@@ -5094,6 +5094,8 @@ dependencies = [
  "anyhow",
  "gpui-kit",
  "rust-embed",
+ "strum",
+ "strum_macros",
  "zopra",
 ]
 
