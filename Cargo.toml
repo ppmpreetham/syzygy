@@ -32,5 +32,5 @@ strip = true # strips debug symbols to slim down the binary
 debug = false # no debug symbols in release
 
 
-[patch.crates-io]
-zopra-gpui-view = { path = "../gpui-rsx" }
+# [patch.crates-io]
+# zopra-gpui-view = { path = "../gpui-rsx" }
