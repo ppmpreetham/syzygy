@@ -1,0 +1,34 @@
+[package]
+name = "project"
+description = "A better burp suite tool"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+gpui-kit = "0.6"
+rust-embed = "8"
+anyhow = "1"
+zopra = "0.1.112"
+
+# dev profile optimized for fast compilation
+[profile.dev]
+opt-level = 0 # no optimizations in dev mode
+debug = true # full debug symbols
+panic = "unwind" # allows stack unwinding
+
+# release profile optimized for performance
+
+[profile.release.package."*"]
+opt-level = 3 # External crates run at full speed so your app isn't sluggish
+
+[profile.release]
+opt-level = 3 # max runtime optimization
+codegen-units = 1 # no parallel blocks (better for performance)
+lto = "fat" # LTO across all crates
+panic = "abort" # Removes unwinding code
+strip = true # strips debug symbols to slim down the binary
+debug = false # no debug symbols in release
+
+
+[patch.crates-io]
+zopra-gpui-view = { path = "../gpui-rsx" }
