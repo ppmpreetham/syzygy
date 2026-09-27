@@ -19,7 +19,7 @@ pub fn proxy() {
     view! {
         <div class="flex flex-col size-full bg-[#141517]">
             <nav
-                underline
+                pill
                 selected_index={tab_val as usize}
                 on_click={move |index, _, cx| {
                     if let Some(tab) = ProxyTab::from_repr(*index) {
@@ -32,28 +32,28 @@ pub fn proxy() {
                 <Tab label="WebSockets history" />
                 <Tab label="Options" />
             </nav>
-            
+
             <div class="flex-1 w-full p-4 text-[#ededed]">
                 {match tab_val {
-                    ProxyTab::Intercept => view! { 
+                    ProxyTab::Intercept => view! {
                         <div class="flex items-center justify-center size-full">
                             "Intercept is on"
-                        </div> 
+                        </div>
                     }.into_any_element(),
-                    ProxyTab::HttpHistory => view! { 
+                    ProxyTab::HttpHistory => view! {
                         <div class="flex items-center justify-center size-full">
                             "HTTP History Table Here"
-                        </div> 
+                        </div>
                     }.into_any_element(),
-                    ProxyTab::WebSocketsHistory => view! { 
+                    ProxyTab::WebSocketsHistory => view! {
                         <div class="flex items-center justify-center size-full">
                             "WebSockets History Table Here"
-                        </div> 
+                        </div>
                     }.into_any_element(),
-                    ProxyTab::Options => view! { 
+                    ProxyTab::Options => view! {
                         <div class="flex items-center justify-center size-full">
                             "Proxy Options & Settings"
-                        </div> 
+                        </div>
                     }.into_any_element(),
                 }}
             </div>

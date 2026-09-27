@@ -35,43 +35,43 @@ pub fn app_sidebar(collapsed: bool, active_tab: AppTab, set_active_tab: Rc<dyn F
         >
             <SidebarGroup label="">
                 <SidebarMenu>
-                    <SidebarMenuItem icon={IconName::Inbox} label="Dashboard" active={active_tab == AppTab::Dashboard} on_click={{
+                    <SidebarMenuItem icon={Icon::default().path("icons/dashboard.svg")} label="Dashboard" active={active_tab == AppTab::Dashboard} on_click={{
                         let setter = set_active_tab.clone();
                         move |_, _, cx| setter(AppTab::Dashboard, cx)
                     }} />
-                    <SidebarMenuItem icon={IconName::User} label="Target" active={active_tab == AppTab::Target} on_click={{
+                    <SidebarMenuItem icon={Icon::default().path("icons/target.svg")} label="Target" active={active_tab == AppTab::Target} on_click={{
                         let setter = set_active_tab.clone();
                         move |_, _, cx| setter(AppTab::Target, cx)
                     }} />
-                    <SidebarMenuItem icon={IconName::CircleX} label="Proxy" active={active_tab == AppTab::Proxy} on_click={{
+                    <SidebarMenuItem icon={Icon::default().path("icons/proxy.svg")} label="Proxy" active={active_tab == AppTab::Proxy} on_click={{
                         let setter = set_active_tab.clone();
                         move |_, _, cx| setter(AppTab::Proxy, cx)
                     }} />
-                    <SidebarMenuItem icon={IconName::FolderOpen} label="Intruder" active={active_tab == AppTab::Intruder} on_click={{
+                    <SidebarMenuItem icon={Icon::default().path("icons/intruder.svg")} label="Intruder" active={active_tab == AppTab::Intruder} on_click={{
                         let setter = set_active_tab.clone();
                         move |_, _, cx| setter(AppTab::Intruder, cx)
                     }} />
-                    <SidebarMenuItem icon={IconName::PanelLeft} label="Repeater" active={active_tab == AppTab::Repeater} on_click={{
+                    <SidebarMenuItem icon={Icon::default().path("icons/repeater.svg")} label="Repeater" active={active_tab == AppTab::Repeater} on_click={{
                         let setter = set_active_tab.clone();
                         move |_, _, cx| setter(AppTab::Repeater, cx)
                     }} />
-                    <SidebarMenuItem icon={IconName::PanelLeft} label="Decoder" active={active_tab == AppTab::Decoder} on_click={{
+                    <SidebarMenuItem icon={Icon::default().path("icons/decoder.svg")} label="Decoder" active={active_tab == AppTab::Decoder} on_click={{
                         let setter = set_active_tab.clone();
                         move |_, _, cx| setter(AppTab::Decoder, cx)
                     }} />
-                    <SidebarMenuItem icon={IconName::PanelLeft} label="Comparer" active={active_tab == AppTab::Comparer} on_click={{
+                    <SidebarMenuItem icon={Icon::default().path("icons/comparer.svg")} label="Comparer" active={active_tab == AppTab::Comparer} on_click={{
                         let setter = set_active_tab.clone();
                         move |_, _, cx| setter(AppTab::Comparer, cx)
                     }} />
-                    <SidebarMenuItem icon={IconName::PanelLeft} label="Logger" active={active_tab == AppTab::Logger} on_click={{
+                    <SidebarMenuItem icon={Icon::default().path("icons/logger.svg")} label="Logger" active={active_tab == AppTab::Logger} on_click={{
                         let setter = set_active_tab.clone();
                         move |_, _, cx| setter(AppTab::Logger, cx)
                     }} />
-                    <SidebarMenuItem icon={IconName::PanelLeft} label="Organizer" active={active_tab == AppTab::Organizer} on_click={{
+                    <SidebarMenuItem icon={IconName::Folder} label="Organizer" active={active_tab == AppTab::Organizer} on_click={{
                         let setter = set_active_tab.clone();
                         move |_, _, cx| setter(AppTab::Organizer, cx)
                     }} />
-                    <SidebarMenuItem icon={IconName::PanelLeft} label="Extensions" active={active_tab == AppTab::Extensions} on_click={{
+                    <SidebarMenuItem icon={Icon::default().path("icons/extension.svg")} label="Extensions" active={active_tab == AppTab::Extensions} on_click={{
                         let setter = set_active_tab.clone();
                         move |_, _, cx| setter(AppTab::Extensions, cx)
                     }} />
@@ -80,5 +80,3 @@ pub fn app_sidebar(collapsed: bool, active_tab: AppTab, set_active_tab: Rc<dyn F
         </Sidebar>
     }
 }
-
-

@@ -1,4 +1,4 @@
-use anyhow::Result;
+﻿use anyhow::Result;
 use gpui_kit::{AssetSource, SharedString, assets::Assets};
 use rust_embed::RustEmbed;
 use std::borrow::Cow;
