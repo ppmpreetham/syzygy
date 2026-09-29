@@ -8870,9 +8870,7 @@ checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
 
 [[package]]
 name = "zopra"
-version = "0.1.112"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca8c6b4fdca3b407ce44add6758f9b1bbd1bb88e04727021fbfa18900f11292c"
+version = "0.1.114"
 dependencies = [
  "anyhow",
  "futures",
@@ -8886,7 +8884,7 @@ dependencies = [
 
 [[package]]
 name = "zopra-gpui-view"
-version = "0.1.111"
+version = "0.1.113"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -8896,8 +8894,6 @@ dependencies = [
 [[package]]
 name = "zopra_macros"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5fd44fc57af59ab611e6fdb232a19c99bf9366b3611fe46a1c7185679d49410"
 dependencies = [
  "proc-macro2",
  "quote",
