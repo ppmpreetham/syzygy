@@ -2,6 +2,7 @@ mod app;
 mod assets;
 pub mod components;
 mod config;
+mod backend;
 
 use assets::AppAssets;
 use gpui_kit::component::{Root, TitleBar};
@@ -36,5 +37,3 @@ fn main() {
     cx.activate(true);
   });
 }
-
-
