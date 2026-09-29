@@ -13,14 +13,14 @@ pub fn app() {
     let (get_collapsed, set_collapsed) = use_state(false);
     let collapsed_val = get_collapsed();
 
-    let (get_app_tab, set_app_tab) = use_state(AppTab::Dashboard);
+    let (get_app_tab, set_app_tab) = use_state(AppTab::Proxy);
     let app_tab_val = get_app_tab();
     let set_app_tab_rc = Rc::new(move |val, cx: &mut gpui_kit::App| set_app_tab(val, cx));
 
     view! {
         <div class="flex flex-col size-full bg-[#141517] text-[#ededed]">
             <AppTitleBar />
-            
+
             <div class="flex-1 w-full relative">
                 <Resizable id="main-layout" horizontal
                     on_resize={move |state, _window, cx| {
@@ -36,10 +36,10 @@ pub fn app() {
                         size={px(250.)}
                         size_range={px(55.)..px(600.)}
                     >
-                        <AppSidebar 
-                            collapsed={collapsed_val} 
-                            active_tab={app_tab_val} 
-                            set_active_tab={set_app_tab_rc} 
+                        <AppSidebar
+                            collapsed={collapsed_val}
+                            active_tab={app_tab_val}
+                            set_active_tab={set_app_tab_rc}
                         />
                     </ResizablePanel>
                     <ResizablePanel>
@@ -50,4 +50,3 @@ pub fn app() {
         </div>
     }
 }
-
