@@ -1,13 +1,13 @@
 mod app;
 mod assets;
+mod backend;
 pub mod components;
 mod config;
-mod backend;
 
+use app::app;
 use assets::AppAssets;
 use gpui_kit::component::{Root, TitleBar};
 use gpui_kit::*;
-use app::app;
 
 pub struct Main;
 impl Render for Main {
@@ -22,7 +22,11 @@ fn main() {
 
   app.run(move |cx| {
     gpui_kit::init(cx);
-    gpui_kit::component::theme::Theme::change(gpui_kit::component::theme::ThemeMode::Dark, None, cx);
+    gpui_kit::component::theme::Theme::change(
+      gpui_kit::component::theme::ThemeMode::Dark,
+      None,
+      cx,
+    );
 
     let window_options = WindowOptions {
       window_bounds: Some(config.window_size),

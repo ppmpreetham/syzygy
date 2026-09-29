@@ -5951,6 +5951,7 @@ dependencies = [
  "anyhow",
  "gpui-kit",
  "http-mitm-proxy",
+ "rcgen",
  "rust-embed",
  "strum",
  "strum_macros",
