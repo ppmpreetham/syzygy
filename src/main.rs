@@ -21,6 +21,13 @@ fn main() {
   let app = gpui_kit::application().with_assets(AppAssets);
   let config = config::Config::new();
 
+  std::thread::spawn(|| {
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
+      crate::backend::proxy::start_proxy().await;
+      std::future::pending::<()>().await;
+    });
+  });
   app.run(move |cx| {
     gpui_kit::init(cx);
     gpui_kit::component::theme::Theme::change(

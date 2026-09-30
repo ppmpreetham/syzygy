@@ -44,7 +44,15 @@ pub async fn start_proxy() {
             let req_headers = req.headers().clone();
 
             // INTERCEPTION POINT
-            let (res, _upgrade) = client.send_request(req).await?;
+            let (res, upgrade) = client.send_request(req).await?;
+
+            if let Some(u) = upgrade {
+                tokio::spawn(async move {
+                    if let Err(e) = u.await {
+                        eprintln!("Upgrade tunnel error: {}", e);
+                    }
+                });
+            }
 
             // RESPONSE INTERCEPTION POINT
             tx.send(TrafficEvent {

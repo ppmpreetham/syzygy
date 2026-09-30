@@ -8,6 +8,8 @@ use strum::FromRepr;
 use zopra::cn;
 use zopra::{component, hooks::use_state, view};
 
+use crate::backend::webview::proxy_config;
+
 use zopra::components::webview::{WebView, WebViewProps, use_webview};
 pub struct BrowserRoot {
   pub webview_ctrl: zopra::components::webview::WebViewController,
@@ -86,7 +88,13 @@ impl gpui_kit::Render for BrowserRoot {
                 }} class="bg-blue-600  text-white px-4 py-1 rounded">"Go"</button>
             </div>
             <div class="size-full flex-1 relative rounded overflow-hidden">
-                <WebView url={"https://google.com".to_string()} controller={Some(ctrl)} devtools={Some(true)} transparent={Some(true)} />
+                <WebView
+                    url={"https://google.com".to_string()}
+                    controller={Some(ctrl)}
+                    devtools={Some(true)}
+                    transparent={Some(true)}
+                    proxy={Some(proxy_config())}
+                />
             </div>
         </div>
     }
@@ -239,7 +247,7 @@ pub fn intercept() {
                     id="open-browser"
                     label="Open Browser"
                     on_click={move |_, window, cx| {
-                        println!("Button clicked!");
+
                                                   let webview_ctrl = zopra::components::webview::WebViewController::new();
                           let input_state = cx.new(|cx| {
                               let mut s = gpui_kit::component::input::InputState::new(window, cx);
