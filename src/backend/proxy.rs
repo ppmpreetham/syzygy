@@ -65,7 +65,6 @@ pub async fn start_proxy() {
     .unwrap();
 
   tokio::spawn(server);
-
   tokio::spawn(async move {
     while let Some(event) = rx.recv().await {
       println!(
