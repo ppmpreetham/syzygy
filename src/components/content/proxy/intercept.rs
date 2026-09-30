@@ -243,26 +243,25 @@ pub fn intercept() {
             </div>
             <div class="flex flex-row gap-2 items-center">
                 <div>"Request to https://smtg.com:smtg [smtg:smtg:smtg:smtg]"</div>
-                                <button
+                  <button
                     id="open-browser"
                     label="Open Browser"
                     on_click={move |_, window, cx| {
-
-                                                  let webview_ctrl = zopra::components::webview::WebViewController::new();
-                          let input_state = cx.new(|cx| {
-                              let mut s = gpui_kit::component::input::InputState::new(window, cx);
-                              s.set_value("https://google.com", window, cx);
-                              s
-                          });
-                          let window_options = gpui_kit::WindowOptions {
-                              window_bounds: Some(gpui_kit::WindowBounds::Windowed(gpui_kit::Bounds::centered(None, gpui_kit::size(gpui_kit::px(1000.), gpui_kit::px(800.)), cx))),
-                              window_background: gpui_kit::gpui::WindowBackgroundAppearance::Transparent,
-                              ..Default::default()
-                          };
-                          cx.open_window(window_options, |window, cx| {
-                              window.activate_window();
-                              cx.new(|cx| init_browser(webview_ctrl, input_state, cx))
-                          }).expect("failed to open browser window");
+                      let webview_ctrl = zopra::components::webview::WebViewController::new();
+                      let input_state = cx.new(|cx| {
+                          let mut s = gpui_kit::component::input::InputState::new(window, cx);
+                          s.set_value("https://google.com", window, cx);
+                          s
+                      });
+                      let window_options = gpui_kit::WindowOptions {
+                          window_bounds: Some(gpui_kit::WindowBounds::Windowed(gpui_kit::Bounds::centered(None, gpui_kit::size(gpui_kit::px(1000.), gpui_kit::px(800.)), cx))),
+                          window_background: gpui_kit::gpui::WindowBackgroundAppearance::Transparent,
+                          ..Default::default()
+                      };
+                      cx.open_window(window_options, |window, cx| {
+                          window.activate_window();
+                          cx.new(|cx| init_browser(webview_ctrl, input_state, cx))
+                      }).expect("failed to open browser window");
                     }}
                 />
                 <div>"hamburger"</div>

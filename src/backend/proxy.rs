@@ -47,11 +47,11 @@ pub async fn start_proxy() {
             let (res, upgrade) = client.send_request(req).await?;
 
             if let Some(u) = upgrade {
-                tokio::spawn(async move {
-                    if let Err(e) = u.await {
-                        eprintln!("Upgrade tunnel error: {}", e);
-                    }
-                });
+              tokio::spawn(async move {
+                if let Err(e) = u.await {
+                  eprintln!("Upgrade tunnel error: {}", e);
+                }
+              });
             }
 
             // RESPONSE INTERCEPTION POINT

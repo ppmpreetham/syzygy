@@ -1,24 +1,25 @@
-use std::fs;
-use std::path::PathBuf;
+use anyhow::{Context, Result};
 use directories::ProjectDirs;
 use rcgen::{
-    BasicConstraints, CertificateParams, DistinguishedName, DnType, DnValue, IsCa, Issuer, KeyPair,
-    KeyUsagePurpose,
+  BasicConstraints, CertificateParams, DistinguishedName, DnType, DnValue, IsCa, Issuer, KeyPair,
+  KeyUsagePurpose,
 };
-use anyhow::{Context, Result};
+use std::fs;
+use std::path::PathBuf;
 
 // save the certificate on first launch
-fn ca_paths() -> Result<(PathBuf, PathBuf)>  {
-    let keys_dir = ProjectDirs::from("com", "syzygy", "SyZyGy")
-        .map_or_else(
-            || PathBuf::from("keys"),
-            |dirs| dirs.config_dir().join("keys"),
-        );
+fn ca_paths() -> Result<(PathBuf, PathBuf)> {
+  let keys_dir = ProjectDirs::from("com", "syzygy", "SyZyGy").map_or_else(
+    || PathBuf::from("keys"),
+    |dirs| dirs.config_dir().join("keys"),
+  );
 
-    fs::create_dir_all(&keys_dir)?;
-    Ok((keys_dir.join("syzygy_ca.crt"), keys_dir.join("syzygy_ca.key")))
+  fs::create_dir_all(&keys_dir)?;
+  Ok((
+    keys_dir.join("syzygy_ca.crt"),
+    keys_dir.join("syzygy_ca.key"),
+  ))
 }
-
 
 fn load_ca(cp: &PathBuf, kp: &PathBuf) -> Result<Issuer<'static, KeyPair>> {
   let cp = fs::read_to_string(cp)?;
@@ -60,11 +61,11 @@ pub fn cert_gen(cert_path: &PathBuf, key_path: &PathBuf) -> Result<Issuer<'stati
   Ok(issuer)
 }
 
-pub fn certificate_issuer() -> Result<Issuer<'static, KeyPair>>  {
-    let (cert_path, key_path) = ca_paths()?;
-    if cert_path.exists() && key_path.exists() {
-        load_ca(&cert_path, &key_path)
-    } else {
-        cert_gen(&cert_path, &key_path)
-    }
+pub fn certificate_issuer() -> Result<Issuer<'static, KeyPair>> {
+  let (cert_path, key_path) = ca_paths()?;
+  if cert_path.exists() && key_path.exists() {
+    load_ca(&cert_path, &key_path)
+  } else {
+    cert_gen(&cert_path, &key_path)
+  }
 }
