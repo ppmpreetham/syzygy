@@ -1,3 +1,5 @@
+pub mod request_info;
+use request_info::RequestInfo;
 use gpui_kit::component::button::{Button, DropdownButton};
 use gpui_kit::component::menu::PopupMenuItem;
 use gpui_kit::component::resizable::*;
@@ -311,9 +313,7 @@ pub fn intercept() {
           <ResizablePanel>
             <Resizable id="intercept-req-info" horizontal>
               <ResizablePanel>
-                <div class="flex flex-col p-4">
-                  <div>"Request Info"</div>
-                </div>
+                <RequestInfo content={String::from("GET / HTTP/1.1\r\nHost: example.com\r\nUser-Agent: Mozilla/5.0\r\nAccept: */*\r\n")} />
               </ResizablePanel>
               <ResizablePanel>
                 <Inspector request={String::from("Hello")} />
@@ -364,3 +364,6 @@ pub fn inspector(request: String) {
       </div>
   }
 }
+
+
+
