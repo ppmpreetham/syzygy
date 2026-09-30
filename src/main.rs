@@ -7,6 +7,7 @@ mod config;
 use app::app;
 use assets::AppAssets;
 use gpui_kit::component::{Root, TitleBar};
+use gpui_kit::gpui::WindowBackgroundAppearance;
 use gpui_kit::*;
 
 pub struct Main;
@@ -30,6 +31,7 @@ fn main() {
 
     let window_options = WindowOptions {
       window_bounds: Some(config.window_size),
+      window_background: WindowBackgroundAppearance::Opaque,
       ..TitleBar::window_options()
     };
 
