@@ -1,9 +1,34 @@
+use std::fs;
+use std::path::PathBuf;
+use directories::ProjectDirs;
 use rcgen::{
-  BasicConstraints, CertificateParams, DistinguishedName, DnType, DnValue, IsCa, Issuer, KeyPair,
-  KeyUsagePurpose,
+    BasicConstraints, CertificateParams, DistinguishedName, DnType, DnValue, IsCa, Issuer, KeyPair,
+    KeyUsagePurpose,
 };
+use anyhow::{Context, Result};
 
-pub fn certificate_issuer() -> Issuer<'static, KeyPair> {
+// save the certificate on first launch
+fn ca_paths() -> Result<(PathBuf, PathBuf)>  {
+    let keys_dir = ProjectDirs::from("com", "syzygy", "SyZyGy")
+        .map_or_else(
+            || PathBuf::from("keys"),
+            |dirs| dirs.config_dir().join("keys"),
+        );
+
+    fs::create_dir_all(&keys_dir)?;
+    Ok((keys_dir.join("syzygy_ca.crt"), keys_dir.join("syzygy_ca.key")))
+}
+
+
+fn load_ca(cp: &PathBuf, kp: &PathBuf) -> Result<Issuer<'static, KeyPair>> {
+  let cp = fs::read_to_string(cp)?;
+  let kp = fs::read_to_string(kp)?;
+  let sign_key = KeyPair::from_pem(&kp)?;
+  let issuer = Issuer::from_ca_cert_pem(&cp, sign_key)?;
+  Ok(issuer)
+}
+
+pub fn cert_gen(cert_path: &PathBuf, key_path: &PathBuf) -> Result<Issuer<'static, KeyPair>> {
   let mut distinguished_name = DistinguishedName::new();
   distinguished_name.push(
     DnType::CommonName,
@@ -13,10 +38,8 @@ pub fn certificate_issuer() -> Issuer<'static, KeyPair> {
   let params = {
     let mut p = CertificateParams::default();
     p.distinguished_name = distinguished_name;
-    // full perms, no limits. inf chain here
     p.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
     p.key_usages = vec![
-      // sign other certs
       KeyUsagePurpose::KeyCertSign,
       KeyUsagePurpose::CrlSign,
       KeyUsagePurpose::DigitalSignature,
@@ -24,6 +47,24 @@ pub fn certificate_issuer() -> Issuer<'static, KeyPair> {
     p
   };
 
-  let kp = KeyPair::generate().unwrap();
-  Issuer::new(params, kp)
+  let kp = KeyPair::generate()?;
+  let cert = params.self_signed(&kp)?;
+
+  let c_pem = cert.pem();
+  let key_pem = kp.serialize_pem();
+
+  fs::write(cert_path, c_pem)?;
+  fs::write(key_path, key_pem)?;
+
+  let issuer = Issuer::new(params, kp);
+  Ok(issuer)
+}
+
+pub fn certificate_issuer() -> Result<Issuer<'static, KeyPair>>  {
+    let (cert_path, key_path) = ca_paths()?;
+    if cert_path.exists() && key_path.exists() {
+        load_ca(&cert_path, &key_path)
+    } else {
+        cert_gen(&cert_path, &key_path)
+    }
 }

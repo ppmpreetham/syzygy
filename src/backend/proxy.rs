@@ -23,7 +23,7 @@ pub async fn start_proxy() {
   let (tx, mut rx) = mpsc::unbounded_channel::<TrafficEvent>();
   let client = Arc::new(DefaultClient::new());
 
-  let root_issuer = certificate_issuer();
+  let root_issuer = certificate_issuer().expect("Failed to initialize Root CA framework");
   let proxy = MitmProxy::new(Some(root_issuer), Some(Cache::new(256)));
 
   let tx = Arc::new(tx);
