@@ -1,7 +1,7 @@
 use crate::components::AppTab;
-use crate::components::content::{MainContentProps, main_content};
-use crate::components::sidebar::{AppSidebarProps, app_sidebar};
-use crate::components::titlebar::{AppTitleBar, AppTitleBarProps};
+use crate::components::content::MainContent;
+use crate::components::sidebar::AppSidebar;
+use crate::components::titlebar::AppTitleBar;
 use gpui_kit::component::resizable::*;
 use gpui_kit::*;
 use gpui_kit::{component::TitleBar, prelude::FluentBuilder};

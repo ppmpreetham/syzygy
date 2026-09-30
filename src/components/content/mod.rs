@@ -13,16 +13,16 @@ use crate::components::AppTab;
 use gpui_kit::*;
 use zopra::{component, view};
 
-use self::comparer::{Comparer, ComparerProps};
-use self::dashboard::{Dashboard, DashboardProps};
-use self::decoder::{Decoder, DecoderProps};
-use self::extensions::{Extensions, ExtensionsProps};
-use self::intruder::{Intruder, IntruderProps};
-use self::logger::{Logger, LoggerProps};
-use self::organizer::{Organizer, OrganizerProps};
-use self::proxy::{Proxy, ProxyProps};
-use self::repeater::{Repeater, RepeaterProps};
-use self::target::{Target, TargetProps};
+use self::comparer::Comparer;
+use self::dashboard::Dashboard;
+use self::decoder::Decoder;
+use self::extensions::Extensions;
+use self::intruder::Intruder;
+use self::logger::Logger;
+use self::organizer::Organizer;
+use self::proxy::Proxy;
+use self::repeater::Repeater;
+use self::target::Target;
 
 #[component]
 pub fn main_content(active_tab: AppTab) {

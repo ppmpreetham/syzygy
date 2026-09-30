@@ -10,75 +10,87 @@ use zopra::{component, hooks::use_state, view};
 
 use zopra::components::webview::{WebView, WebViewProps, use_webview};
 pub struct BrowserRoot {
-    pub webview_ctrl: zopra::components::webview::WebViewController,
-    pub input_state: gpui_kit::Entity<gpui_kit::component::input::InputState>,
+  pub webview_ctrl: zopra::components::webview::WebViewController,
+  pub input_state: gpui_kit::Entity<gpui_kit::component::input::InputState>,
 }
 
-pub fn init_browser(webview_ctrl: zopra::components::webview::WebViewController, input_state: gpui_kit::Entity<gpui_kit::component::input::InputState>, cx: &mut gpui_kit::Context<BrowserRoot>) -> BrowserRoot {
-    let ctrl = webview_ctrl.clone();
-    let input = input_state.clone();
-    cx.subscribe(&input_state, move |_, _, event, cx| {
-        if let gpui_kit::component::input::InputEvent::PressEnter { .. } = event {
-            let text = input.read(cx).text().to_string();
-            let url = if !text.starts_with("http") && !text.starts_with("file://") {
-                format!("https://{}", text)
-            } else {
-                text
-            };
-            ctrl.load_url(&url, cx);
-        }
-    }).detach();
-    BrowserRoot { webview_ctrl, input_state }
+pub fn init_browser(
+  webview_ctrl: zopra::components::webview::WebViewController,
+  input_state: gpui_kit::Entity<gpui_kit::component::input::InputState>,
+  cx: &mut gpui_kit::Context<BrowserRoot>,
+) -> BrowserRoot {
+  let ctrl = webview_ctrl.clone();
+  let input = input_state.clone();
+  cx.subscribe(&input_state, move |_, _, event, cx| {
+    if let gpui_kit::component::input::InputEvent::PressEnter { .. } = event {
+      let text = input.read(cx).text().to_string();
+      let url = if !text.starts_with("http") && !text.starts_with("file://") {
+        format!("https://{}", text)
+      } else {
+        text
+      };
+      ctrl.load_url(&url, cx);
+    }
+  })
+  .detach();
+  BrowserRoot {
+    webview_ctrl,
+    input_state,
+  }
 }
 
 impl gpui_kit::Render for BrowserRoot {
-    fn render(&mut self, window: &mut gpui_kit::Window, cx: &mut gpui_kit::Context<Self>) -> impl gpui_kit::IntoElement {
-        let ctrl = self.webview_ctrl.clone();
-        let input_state = self.input_state.clone();
-        zopra::view! {
-            <div class="flex flex-col size-full p-2 gap-2 bg-[#18181b]">
-                <div class="flex flex-row gap-2 items-center px-2 py-1 rounded shadow-lg">
-                    <button
-                        id="win-btn-back"
-                        on_click={{ let c = ctrl.clone(); move |_, _, cx| c.back(cx) }}
-                        class="bg-[#27272a] text-white px-3 py-1 rounded w-fit"
-                        icon={gpui_kit::component::Icon::default().path("icons/browser/caret-left.svg")}
-                    />
-                    <button
-                        id="win-btn-forward"
-                        on_click={{ let c = ctrl.clone(); move |_, _, cx| c.forward(cx) }}
-                        class="bg-[#27272a] text-white px-3 py-1 rounded w-fit"
-                        icon={gpui_kit::component::Icon::default().path("icons/browser/caret-right.svg")}
-                    />
-                    <button
-                        id="win-btn-reload"
-                        on_click={{ let c = ctrl.clone(); move |_, _, cx| c.reload(cx) }}
-                        class="bg-[#27272a] text-white px-3 py-1 rounded w-fit"
-                        icon={gpui_kit::component::Icon::default().path("icons/browser/refresh.svg")}
-                    />
+  fn render(
+    &mut self,
+    window: &mut gpui_kit::Window,
+    cx: &mut gpui_kit::Context<Self>,
+  ) -> impl gpui_kit::IntoElement {
+    let ctrl = self.webview_ctrl.clone();
+    let input_state = self.input_state.clone();
+    zopra::view! {
+        <div class="flex flex-col size-full p-2 gap-2 bg-[#18181b]">
+            <div class="flex flex-row gap-2 items-center px-2 py-1 rounded shadow-lg">
+                <button
+                    id="win-btn-back"
+                    on_click={{ let c = ctrl.clone(); move |_, _, cx| c.back(cx) }}
+                    class="bg-[#27272a] text-white px-3 py-1 rounded w-fit"
+                    icon={gpui_kit::component::Icon::default().path("icons/browser/caret-left.svg")}
+                />
+                <button
+                    id="win-btn-forward"
+                    on_click={{ let c = ctrl.clone(); move |_, _, cx| c.forward(cx) }}
+                    class="bg-[#27272a] text-white px-3 py-1 rounded w-fit"
+                    icon={gpui_kit::component::Icon::default().path("icons/browser/caret-right.svg")}
+                />
+                <button
+                    id="win-btn-reload"
+                    on_click={{ let c = ctrl.clone(); move |_, _, cx| c.reload(cx) }}
+                    class="bg-[#27272a] text-white px-3 py-1 rounded w-fit"
+                    icon={gpui_kit::component::Icon::default().path("icons/browser/refresh.svg")}
+                />
 
-                    <input state={&input_state} class="text-white"/>
+                <input state={&input_state} class="text-white"/>
 
-                    <button id="win-btn-go" on_click={{
-                        let c = ctrl.clone();
-                        let input = input_state.clone();
-                        move |_, _, cx| {
-                            let text = input.read(cx).text().to_string();
-                            let url = if !text.starts_with("http") {
-                                format!("https://{}", text)
-                            } else {
-                                text
-                            };
-                            c.load_url(&url, cx);
-                        }
-                    }} class="bg-blue-600  text-white px-4 py-1 rounded">"Go"</button>
-                </div>
-                <div class="size-full flex-1 relative rounded overflow-hidden">
-                    <WebView url={"https://google.com".to_string()} controller={Some(ctrl)} devtools={Some(true)} transparent={Some(false)} />
-                </div>
+                <button id="win-btn-go" on_click={{
+                    let c = ctrl.clone();
+                    let input = input_state.clone();
+                    move |_, _, cx| {
+                        let text = input.read(cx).text().to_string();
+                        let url = if !text.starts_with("http") {
+                            format!("https://{}", text)
+                        } else {
+                            text
+                        };
+                        c.load_url(&url, cx);
+                    }
+                }} class="bg-blue-600  text-white px-4 py-1 rounded">"Go"</button>
             </div>
-        }
+            <div class="size-full flex-1 relative rounded overflow-hidden">
+                <WebView url={"https://google.com".to_string()} controller={Some(ctrl)} devtools={Some(true)} transparent={Some(false)} />
+            </div>
+        </div>
     }
+  }
 }
 
 #[derive(Clone)]
@@ -317,7 +329,7 @@ enum InspectorTab {
 // later change the input to RequestInfo
 #[component]
 pub fn inspector(request: String) {
-    let _ = request;
+  let _ = request;
   let (active_tab, set_active_tab) = use_state(InspectorTab::Inspect);
   let tab_val = active_tab();
 
@@ -345,4 +357,3 @@ pub fn inspector(request: String) {
       </div>
   }
 }
-

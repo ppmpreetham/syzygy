@@ -1,10 +1,9 @@
 use crate::components::AppTab;
+use gpui_kit::assets::IconName;
 use gpui_kit::component::Icon;
 use gpui_kit::component::Sizable;
-use gpui_kit::component::button::*;
 use gpui_kit::component::sidebar::*;
 use gpui_kit::*;
-use gpui_kit::{assets::IconName, prelude::FluentBuilder};
 use std::rc::Rc;
 use zopra::{component, view};
 

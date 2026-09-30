@@ -1,8 +1,5 @@
 use gpui_kit::assets::IconName;
-use gpui_kit::component::Icon;
 use gpui_kit::component::Sizable;
-use gpui_kit::component::TitleBar;
-use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use zopra::{component, view};
 

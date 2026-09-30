@@ -7,10 +7,10 @@ pub mod intercept;
 pub mod options;
 pub mod websockets_history;
 
-use self::http_history::{HttpHistory, HttpHistoryProps};
-use self::intercept::{Intercept, InterceptProps};
-use self::options::{Options, OptionsProps};
-use self::websockets_history::{WebsocketsHistory, WebsocketsHistoryProps};
+use self::http_history::HttpHistory;
+use self::intercept::Intercept;
+use self::options::Options;
+use self::websockets_history::WebsocketsHistory;
 
 #[derive(Clone, Copy, PartialEq, Eq, FromRepr)]
 #[repr(usize)]
