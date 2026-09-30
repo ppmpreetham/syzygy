@@ -104,7 +104,7 @@ pub fn http_history() {
                                   <div
                                       class="flex flex-row w-full min-w-[150px] h-full items-center text-black bg-white"
                                       bg={gpui::rgba(hex)}
-                                      text_color={gpui::rgba(text_hex)}
+                                      textColor={gpui::rgba(text_hex)}
                                   >
                                       { color_name.clone() }
                                   </div>
