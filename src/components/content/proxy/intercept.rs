@@ -48,8 +48,8 @@ impl gpui_kit::Render for BrowserRoot {
     let ctrl = self.webview_ctrl.clone();
     let input_state = self.input_state.clone();
     zopra::view! {
-        <div class="flex flex-col size-full p-2 gap-2 bg-[#18181b]">
-            <div class="flex flex-row gap-2 items-center px-2 py-1 rounded shadow-lg">
+        <div class="flex flex-col size-full p-2 gap-2 ">
+            <div class="flex flex-row gap-2 items-center px-2 py-1 rounded shadow-lg bg-[#18181b]">
                 <button
                     id="win-btn-back"
                     on_click={{ let c = ctrl.clone(); move |_, _, cx| c.back(cx) }}
@@ -86,7 +86,7 @@ impl gpui_kit::Render for BrowserRoot {
                 }} class="bg-blue-600  text-white px-4 py-1 rounded">"Go"</button>
             </div>
             <div class="size-full flex-1 relative rounded overflow-hidden">
-                <WebView url={"https://google.com".to_string()} controller={Some(ctrl)} devtools={Some(true)} transparent={Some(false)} />
+                <WebView url={"https://google.com".to_string()} controller={Some(ctrl)} devtools={Some(true)} transparent={Some(true)} />
             </div>
         </div>
     }
