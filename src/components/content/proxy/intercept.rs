@@ -8,7 +8,81 @@ use strum::FromRepr;
 use zopra::cn;
 use zopra::{component, hooks::use_state, view};
 
+use zopra::components::webview::{WebView, WebViewProps, use_webview};
+pub struct BrowserRoot {
+    pub webview_ctrl: zopra::components::webview::WebViewController,
+    pub input_state: gpui_kit::Entity<gpui_kit::component::input::InputState>,
+}
+
+pub fn init_browser(webview_ctrl: zopra::components::webview::WebViewController, input_state: gpui_kit::Entity<gpui_kit::component::input::InputState>, cx: &mut gpui_kit::Context<BrowserRoot>) -> BrowserRoot {
+    let ctrl = webview_ctrl.clone();
+    let input = input_state.clone();
+    cx.subscribe(&input_state, move |_, _, event, cx| {
+        if let gpui_kit::component::input::InputEvent::PressEnter { .. } = event {
+            let text = input.read(cx).text().to_string();
+            let url = if !text.starts_with("http") && !text.starts_with("file://") {
+                format!("https://{}", text)
+            } else {
+                text
+            };
+            ctrl.load_url(&url, cx);
+        }
+    }).detach();
+    BrowserRoot { webview_ctrl, input_state }
+}
+
+impl gpui_kit::Render for BrowserRoot {
+    fn render(&mut self, window: &mut gpui_kit::Window, cx: &mut gpui_kit::Context<Self>) -> impl gpui_kit::IntoElement {
+        let ctrl = self.webview_ctrl.clone();
+        let input_state = self.input_state.clone();
+        zopra::view! {
+            <div class="flex flex-col size-full p-2 gap-2 bg-[#18181b]">
+                <div class="flex flex-row gap-2 items-center px-2 py-1 rounded shadow-lg">
+                    <button
+                        id="win-btn-back"
+                        on_click={{ let c = ctrl.clone(); move |_, _, cx| c.back(cx) }}
+                        class="bg-[#27272a] text-white px-3 py-1 rounded w-fit"
+                        icon={gpui_kit::component::Icon::default().path("icons/browser/caret-left.svg")}
+                    />
+                    <button
+                        id="win-btn-forward"
+                        on_click={{ let c = ctrl.clone(); move |_, _, cx| c.forward(cx) }}
+                        class="bg-[#27272a] text-white px-3 py-1 rounded w-fit"
+                        icon={gpui_kit::component::Icon::default().path("icons/browser/caret-right.svg")}
+                    />
+                    <button
+                        id="win-btn-reload"
+                        on_click={{ let c = ctrl.clone(); move |_, _, cx| c.reload(cx) }}
+                        class="bg-[#27272a] text-white px-3 py-1 rounded w-fit"
+                        icon={gpui_kit::component::Icon::default().path("icons/browser/refresh.svg")}
+                    />
+
+                    <input state={&input_state} class="text-white"/>
+
+                    <button id="win-btn-go" on_click={{
+                        let c = ctrl.clone();
+                        let input = input_state.clone();
+                        move |_, _, cx| {
+                            let text = input.read(cx).text().to_string();
+                            let url = if !text.starts_with("http") {
+                                format!("https://{}", text)
+                            } else {
+                                text
+                            };
+                            c.load_url(&url, cx);
+                        }
+                    }} class="bg-blue-600  text-white px-4 py-1 rounded">"Go"</button>
+                </div>
+                <div class="size-full flex-1 relative rounded overflow-hidden">
+                    <WebView url={"https://google.com".to_string()} controller={Some(ctrl)} devtools={Some(true)} transparent={Some(false)} />
+                </div>
+            </div>
+        }
+    }
+}
+
 #[derive(Clone)]
+
 pub struct InterceptCell {
   pub time: usize,
   // get the request type (GET, POST, etc.) when wiring up
@@ -39,7 +113,7 @@ pub enum DropAction {
 
 #[component]
 pub fn intercept() {
-  let (get_requests, set_requests) = use_state(vec![
+  let (get_requests, _set_requests) = use_state(vec![
     InterceptCell {
       time: 50,
       req_type: 1,
@@ -149,7 +223,28 @@ pub fn intercept() {
             </div>
             <div class="flex flex-row gap-2 items-center">
                 <div>"Request to https://smtg.com:smtg [smtg:smtg:smtg:smtg]"</div>
-                <div>"Open Browser"</div>
+                                <button
+                    id="open-browser"
+                    label="Open Browser"
+                    on_click={move |_, window, cx| {
+                        println!("Button clicked!");
+                                                  let webview_ctrl = zopra::components::webview::WebViewController::new();
+                          let input_state = cx.new(|cx| {
+                              let mut s = gpui_kit::component::input::InputState::new(window, cx);
+                              s.set_value("https://google.com", window, cx);
+                              s
+                          });
+                          let window_options = gpui_kit::WindowOptions {
+                              window_bounds: Some(gpui_kit::WindowBounds::Windowed(gpui_kit::Bounds::centered(None, gpui_kit::size(gpui_kit::px(1000.), gpui_kit::px(800.)), cx))),
+                              window_background: gpui_kit::gpui::WindowBackgroundAppearance::Transparent,
+                              ..Default::default()
+                          };
+                          cx.open_window(window_options, |window, cx| {
+                              window.activate_window();
+                              cx.new(|cx| init_browser(webview_ctrl, input_state, cx))
+                          }).expect("failed to open browser window");
+                    }}
+                />
                 <div>"hamburger"</div>
             </div>
         </div>
@@ -179,7 +274,7 @@ pub fn intercept() {
                   {|req| view! {
                           <tr class={cn!(
                               "",
-                              req.highlight.map(|(bg, text)| format!("bg-[#{:08x}] text-[#{:08x}]", bg, text))
+                              req.highlight.map(|(bg, text)| format!("bg-[#{:08x}] text-[#{:08x}]", bg, text)).as_deref()
                           )}>
                               <td id="time">{ req.time.to_string() }</td>
                               <td id="req_type">{ req.req_type.to_string() }</td>
@@ -222,6 +317,7 @@ enum InspectorTab {
 // later change the input to RequestInfo
 #[component]
 pub fn inspector(request: String) {
+    let _ = request;
   let (active_tab, set_active_tab) = use_state(InspectorTab::Inspect);
   let tab_val = active_tab();
 
@@ -249,3 +345,4 @@ pub fn inspector(request: String) {
       </div>
   }
 }
+

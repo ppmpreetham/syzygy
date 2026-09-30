@@ -5,20 +5,20 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-gpui-kit = "0.6"
+gpui-kit = "0.7"
 rust-embed = "8"
 anyhow = "1"
-zopra = "*"
+zopra = { version = "*", features = ["wry"] }
 strum = "0.28.0"
 strum_macros = "0.28.0"
 http-mitm-proxy = "0.18.0"
 tokio = "1.53.1"
 
-wry = { version = "0.57" }
+wry = { version = "0.53.5" }
 rcgen = "0.14.10"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-wry = { version = "0.57", features = ["mac-proxy"] }
+wry = { version = "0.53.5" }
 
 # dev profile optimized for fast compilation
 [profile.dev]
@@ -46,3 +46,4 @@ zopra-gpui-view = { path = "../gpui-rsx" }
 
 zopra = { path = "../zopra" }
 zopra_macros = { path = "../zopra/zopra_macros" }
+
