@@ -8,23 +8,15 @@ use std::fs;
 use std::path::PathBuf;
 
 // get the storage path for the CA certificate. if not there, create it
-pub fn storage_path() -> Result<PathBuf> {
-    let dir = ProjectDirs::from("com", "syzygy", "SyZyGy");
-    dir.map_or_else(
-        || Err(anyhow!("Could not determine system project directories")),
-        |proj_dirs| {
-            let config_dir = proj_dirs.config_dir().to_path_buf();
-            if !config_dir.exists() {
-                fs::create_dir_all(&config_dir)?;
-            }
-            Ok(config_dir)
-        },
-    )
+pub fn storage_path() -> Option<PathBuf> {
+    ProjectDirs::from("com", "syzygy", "SyZyGy")
+        .map(|proj_dirs| proj_dirs.config_dir().to_path_buf())
 }
+
 
 // save the certificate on first launch
 fn ca_paths() -> Result<(PathBuf, PathBuf)> {
-    let keys_dir = storage_path()?.join("keys");
+    let keys_dir = storage_path().ok_or_else(|| anyhow!("No path"))?.join("keys");
     fs::create_dir_all(&keys_dir)?;
 
     Ok((
