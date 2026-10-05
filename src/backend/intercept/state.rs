@@ -3,6 +3,8 @@ use std::sync::Arc;
 use std::sync::Mutex as StdMutex;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use crate::backend::RequestRow;
+use crate::backend::storage::disk::Db;
+use super::FLUSH_EVERY;
 
 use super::exchange::{Status, Decision, Exchange};
 use gpui_kit::http_client::{Request, Response};
@@ -29,6 +31,10 @@ pub struct ProxyState {
     // ones that are intercepted, with the request so the ui can show it
     pub pending: StdMutex<BTreeMap<usize, (Request<Full<Bytes>>, RequestRow, oneshot::Sender<Decision>)>>,
     pub event_tx: broadcast::Sender<ProxyEvent>,
+
+    // persistance
+    pub disk: Option<Db>,
+    pub flush_cursor: AtomicUsize,
 }
 
 impl ProxyState {
@@ -40,6 +46,9 @@ impl ProxyState {
             history: StdMutex::new(Vec::new()),
             pending: StdMutex::new(BTreeMap::new()),
             event_tx,
+            // TODO: remove this unwrap later
+            disk: Db::new().ok(),
+            flush_cursor: AtomicUsize::new(0),
         })
     }
 
@@ -156,6 +165,7 @@ impl ProxyState {
             history[index].row.status = Some(http_mitm_proxy::hyper::StatusCode::BAD_GATEWAY);
         }
         _ = self.event_tx.send(ProxyEvent::History(index, status));
+        self.maybe_flush();
     }
 
     pub async fn set_request(&self, index: usize, request: Request<Full<Bytes>>) {
@@ -186,5 +196,22 @@ impl ProxyState {
         row.mime = mime;
         // Notify UI that a request completed
         _ = self.event_tx.send(ProxyEvent::History(index, Status::Done));
+        self.maybe_flush();
     }
+
+    fn maybe_flush(&self) {
+        let cursor = self.flush_cursor.load(Ordering::Relaxed);
+        let history = self.history.lock().unwrap();
+        if history.len() - cursor >= FLUSH_EVERY {
+            if let Some(db) = &self.disk {
+                // indexes stay stable because we never truncate the Vec
+                if let Err(e) = db.flush(&history[cursor..], cursor) {
+                    eprintln!("history flush failed: {e}");
+                    return;
+                }
+                self.flush_cursor.store(history.len(), Ordering::Relaxed);
+            }
+        }
+    }
+
 }
