@@ -3,7 +3,9 @@ use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use zopra::{component, hooks::use_state, view};
 
-use crate::backend::betterproxy::{ProxyEvent, ProxyState, parse_request};
+use crate::backend::ProxyState;
+use crate::backend::intercept::parse::parse_request;
+use crate::backend::intercept::state::ProxyEvent;
 use crate::backend::uimeta::RequestRow;
 use std::sync::Arc;
 

@@ -1,4 +1,5 @@
-use crate::backend::betterproxy::{ProxyEvent, ProxyState};
+use crate::backend::ProxyState;
+use crate::backend::intercept::state::ProxyEvent;
 use crate::backend::uimeta::RequestRow;
 use gpui_kit::component::menu::{PopupMenu, PopupMenuItem};
 use gpui_kit::*;

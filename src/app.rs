@@ -1,5 +1,4 @@
-use crate::backend::betterproxy::ProxyState;
-use crate::components::AppTab;
+use crate::{backend::ProxyState, components::AppTab};
 use crate::components::content::MainContent;
 use crate::components::sidebar::AppSidebar;
 use crate::components::titlebar::AppTitleBar;

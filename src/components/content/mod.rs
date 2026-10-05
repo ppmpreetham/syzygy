@@ -9,7 +9,7 @@ pub mod proxy;
 pub mod repeater;
 pub mod target;
 
-use crate::backend::betterproxy::ProxyState;
+use crate::backend::ProxyState;
 use crate::components::AppTab;
 use gpui_kit::*;
 use std::sync::Arc;

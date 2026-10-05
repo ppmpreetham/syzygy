@@ -4,7 +4,7 @@ use gpui_kit::*;
 use zopra::components::webview::WebView;
 use zopra::{WebViewController, component};
 
-use crate::backend::webview::proxy_config;
+use crate::backend::proxy_config;
 
 struct BrowserWindow {
     webview_ctrl: WebViewController,

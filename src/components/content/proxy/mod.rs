@@ -1,4 +1,3 @@
-use crate::backend::betterproxy::ProxyState;
 use gpui_kit::*;
 use std::sync::Arc;
 use strum_macros::FromRepr;
@@ -8,6 +7,8 @@ pub mod http_history;
 pub mod intercept;
 pub mod options;
 pub mod websockets_history;
+
+use crate::backend::ProxyState;
 
 use self::http_history::HttpHistory;
 use self::intercept::Intercept;
