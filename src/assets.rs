@@ -1,4 +1,4 @@
-﻿use anyhow::Result;
+use anyhow::Result;
 use gpui_kit::{AssetSource, SharedString, assets::Assets};
 use rust_embed::RustEmbed;
 use std::borrow::Cow;
@@ -8,22 +8,22 @@ use std::borrow::Cow;
 pub struct AppAssets;
 
 impl AssetSource for AppAssets {
-  fn load(&self, path: &str) -> Result<Option<Cow<'static, [u8]>>> {
-    if let Some(file) = AppAssets::get(path) {
-      return Ok(Some(file.data));
+    fn load(&self, path: &str) -> Result<Option<Cow<'static, [u8]>>> {
+        if let Some(file) = AppAssets::get(path) {
+            return Ok(Some(file.data));
+        }
+
+        Assets.load(path)
     }
 
-    Assets.load(path)
-  }
+    fn list(&self, path: &str) -> Result<Vec<SharedString>> {
+        let mut files = AppAssets::iter()
+            .filter(|file| file.starts_with(path))
+            .map(SharedString::from)
+            .collect::<Vec<_>>();
 
-  fn list(&self, path: &str) -> Result<Vec<SharedString>> {
-    let mut files = AppAssets::iter()
-      .filter(|file| file.starts_with(path))
-      .map(SharedString::from)
-      .collect::<Vec<_>>();
+        files.extend(Assets.list(path)?);
 
-    files.extend(Assets.list(path)?);
-
-    Ok(files)
-  }
+        Ok(files)
+    }
 }
