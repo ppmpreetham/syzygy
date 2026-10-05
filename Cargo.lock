@@ -6206,12 +6206,15 @@ dependencies = [
  "anyhow",
  "directories",
  "gpui-kit",
+ "http-body-util",
  "http-mitm-proxy",
+ "indexmap",
  "rcgen",
  "rust-embed",
  "strum",
  "strum_macros",
  "tokio",
+ "url",
  "wry",
  "zopra",
 ]
@@ -10484,9 +10487,10 @@ checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
 
 [[package]]
 name = "zopra"
-version = "0.1.115"
+version = "0.2.0"
 dependencies = [
  "anyhow",
+ "derive_more 2.1.1",
  "futures",
  "gpui-kit",
  "gpui-wry",
