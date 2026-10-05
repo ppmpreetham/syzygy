@@ -7,6 +7,7 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::sync::Arc;
 use zopra::{component, hooks::use_state, view};
+use gpui_kit::gpui::SharedString;
 
 type HistoryRow = (
     usize,
@@ -37,7 +38,7 @@ const COLORS: [(&str, u32, u32); 10] = [
 ];
 
 struct HighlightedCell {
-    value: String,
+    value: SharedString,
     colors: Option<(u32, u32)>,
 }
 
@@ -66,9 +67,9 @@ impl IntoElement for HighlightedCell {
     }
 }
 
-fn highlighted_cell(row: &HistoryRow, value: String) -> HighlightedCell {
+fn highlighted_cell(row: &HistoryRow, value: impl Into<SharedString>) -> HighlightedCell {
     HighlightedCell {
-        value,
+        value: value.into(),
         colors: row.2,
     }
 }

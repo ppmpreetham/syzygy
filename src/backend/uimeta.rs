@@ -8,6 +8,7 @@ use http_mitm_proxy::hyper::http::{HeaderValue, Method};
 use std::net::{IpAddr, Ipv4Addr};
 use std::time::SystemTime;
 use wry::http;
+use gpui_kit::gpui::SharedString;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AddressType {
@@ -29,7 +30,7 @@ pub struct RequestRow {
     pub addr_type: AddressType,
     pub dirn: Dirn,
     pub method: Method,
-    pub host: String,
+    pub host: SharedString,
     // evreything after the host
     pub uri: http::Uri,
     pub status: Option<http::StatusCode>,
@@ -40,14 +41,14 @@ pub struct RequestRow {
     // TODO: this aswell
     pub port: u16,
     // TODO: this aswell
-    pub mime: String,
-    pub extension: Option<String>,
-    pub title: Option<String>,
+    pub mime: SharedString,
+    pub extension: Option<SharedString>,
+    pub title: Option<SharedString>,
     pub cookies: Vec<HeaderValue>,
     pub start_response_timer: Option<SystemTime>,
     pub end_response_timer: Option<SystemTime>,
     pub websocket_id: Option<u64>,
-    pub notes: String,
+    pub notes: SharedString,
 }
 
 pub struct FullRequest {
@@ -61,12 +62,12 @@ pub fn row_converter(req: Request<Incoming>) -> FullRequest {
     // TODO: make this global later
     let (parts, body) = req.into_parts();
 
-    let host = String::from(parts.uri.host().unwrap_or("localhost"));
+    let host = SharedString::from(parts.uri.host().unwrap_or("localhost").to_string());
     let tls = matches!(parts.uri.scheme_str(), Some("https" | "wss"));
     let extension = Path::new(parts.uri.path())
         .extension()
         .and_then(|e| e.to_str())
-        .map(|e| e.to_string());
+        .map(|e| SharedString::from(e.to_string()));
     let addr_type =
         if let Some("websocket") = parts.headers.get("upgrade").and_then(|v| v.to_str().ok()) {
             AddressType::WS
@@ -96,14 +97,14 @@ pub fn row_converter(req: Request<Incoming>) -> FullRequest {
         ip: IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
         // TODO: idk how to implement the ip yet, currently so nvm
         port: 8080,
-        mime: String::new(),
+        mime: SharedString::from(""),
         extension,
         title: None,
         cookies,
         start_response_timer: Some(SystemTime::now()),
         end_response_timer: None,
         websocket_id: None,
-        notes: String::new(),
+        notes: SharedString::from(""),
     };
 
     FullRequest {

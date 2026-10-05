@@ -9,6 +9,7 @@ use gpui_kit::http_client::{Request, Response};
 use http_body_util::{Full};
 use http_mitm_proxy::hyper::body::{Bytes};
 use tokio::sync::{broadcast, oneshot};
+use gpui_kit::gpui::SharedString;
 
 #[derive(Clone)]
 pub enum ProxyEvent {
@@ -172,12 +173,12 @@ impl ProxyState {
             .clone()
             .into_inner()
             .map_or(0, |body| body.len());
-        let mime = response
+        let mime = SharedString::from(response
             .headers()
             .get(http_mitm_proxy::hyper::header::CONTENT_TYPE)
             .and_then(|value| value.to_str().ok())
             .unwrap_or_default()
-            .to_string();
+            .to_string());
         let row = &mut history[index].row;
         row.status = Some(status);
         row.length = length;
