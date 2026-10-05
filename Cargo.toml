@@ -21,6 +21,7 @@ wry = { version = "0.53.5" }
 url = "2.5.8"
 indexmap = "2.14.2"
 http-body-util = "0.1.5"
+fjall = "3.1.12"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 wry = { version = "0.53.5" }
@@ -51,3 +52,11 @@ zopra-gpui-view = { path = "../gpui-rsx" }
 
 zopra = { path = "../zopra" }
 zopra_macros = { path = "../zopra/zopra_macros" }
+
+[lints.rust]
+unused = "warn"
+absolute_paths = "warn"
+
+[lints.clippy]
+perf = "warn"
+complexity = "warn"

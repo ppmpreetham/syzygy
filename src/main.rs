@@ -1,3 +1,5 @@
+#![deny(clippy::absolute_paths)]
+
 mod app;
 mod assets;
 mod backend;
