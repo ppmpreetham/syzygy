@@ -1,7 +1,7 @@
 use gpui_kit::component::{menu, menu::PopupMenuItem};
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
-use zopra::{component, hooks::use_state, view};
+use zopra::{use_effect, component, hooks::use_state, view};
 
 use crate::backend::ProxyState;
 use crate::backend::intercept::parse::parse_request;
@@ -64,14 +64,28 @@ pub fn intercept(proxy_state: Arc<ProxyState>) {
 
     let selected = (*selected_idx).and_then(|i| requests.get(i));
     let selected_id = selected.map(|request| request.0);
+    let selected_host_val = selected.map(|request| request.1.host.clone()).unwrap_or_default();
 
-    let req_content = selected
-        .and_then(|request| proxy_state.pending_request_text(request.0))
-        .unwrap_or_else(|| "No request selected".to_string());
+    let (req_content, set_req_content) = use_state("No request selected".to_string());
+    let (req_host, set_req_host) = use_state(String::new());
 
-    let req_host = selected
-        .map(|request| request.1.host.clone())
-        .unwrap_or_default();
+    let state = proxy_state.clone();
+    let set_rc = set_req_content.clone();
+    let set_rh = set_req_host.clone();
+
+    use_effect!(
+        move || {
+            let content = selected_id
+                .and_then(|id| state.pending_request_text(id))
+                .unwrap_or_else(|| "No request selected".to_string());
+            set_rc(content);
+            set_rh(selected_host_val);
+        },
+        [selected_id]
+    );
+
+    let req_content = (*req_content).clone();
+    let req_host = (*req_host).clone();
 
     let (forward_action, set_forward_action) = use_state(ForwardAction::Forward);
     let (drop_action, set_drop_action) = use_state(DropAction::Drop);
