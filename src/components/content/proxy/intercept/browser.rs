@@ -115,7 +115,7 @@ pub(super) fn open_browser(window: &mut Window, cx: &mut App) {
             size(px(1000.), px(800.)),
             cx,
         ))),
-        window_background: WindowBackgroundAppearance::Transparent,
+        window_background: WindowBackgroundAppearance::Blurred,
         ..Default::default()
     };
 
