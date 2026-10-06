@@ -6358,6 +6358,7 @@ dependencies = [
  "http-body-util",
  "http-mitm-proxy",
  "indexmap",
+ "log",
  "rcgen",
  "rkyv",
  "rust-embed",

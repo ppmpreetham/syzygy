@@ -28,6 +28,7 @@ pub enum Status {
 }
 
 /// things we store in HTTP history
+#[derive(Clone)]
 pub struct Exchange {
     pub request: Request<Full<Bytes>>,
     pub response: Option<Response<Full<Bytes>>>,

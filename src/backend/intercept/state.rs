@@ -10,6 +10,7 @@ use http_mitm_proxy::hyper::body::Bytes;
 use http_mitm_proxy::hyper::header;
 use std::collections::BTreeMap;
 use std::mem::take;
+use std::ops;
 use std::sync::Arc;
 use std::sync::Mutex as StdMutex;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -100,7 +101,7 @@ impl ProxyState {
             .lock()
             .unwrap()
             .get(&id)
-            .map(|(request, _, _)| {
+            .map(|(request, ..)| {
                 let headers = request
                     .headers()
                     .iter()
@@ -121,6 +122,21 @@ impl ProxyState {
                     String::from_utf8_lossy(&body)
                 )
             })
+    }
+
+    pub fn history_count(&self) -> usize {
+        self.history.lock().unwrap().len()
+    }
+
+    pub fn history_slice(&self, range: ops::Range<usize>) -> Vec<(usize, RequestRow)> {
+        let history = self.history.lock().unwrap();
+        let start = range.start.min(history.len());
+        let end = range.end.min(history.len());
+        history[start..end]
+            .iter()
+            .enumerate()
+            .map(|(i, exchange)| (start + i, exchange.row.clone()))
+            .collect()
     }
 
     pub fn history_rows(&self) -> Vec<(usize, RequestRow)> {
@@ -162,13 +178,15 @@ impl ProxyState {
     }
 
     pub fn set_status(&self, index: usize, status: Status) {
-        let mut history = self.history.lock().unwrap();
-        history[index].status = status;
-        if status == Status::Dropped {
-            history[index].row.status = Some(StatusCode::NO_CONTENT);
-        } else if status == Status::Failed {
-            history[index].row.status = Some(StatusCode::BAD_GATEWAY);
-        }
+        {
+            let mut history = self.history.lock().unwrap();
+            history[index].status = status;
+            if status == Status::Dropped {
+                history[index].row.status = Some(StatusCode::NO_CONTENT);
+            } else if status == Status::Failed {
+                history[index].row.status = Some(StatusCode::BAD_GATEWAY);
+            }
+        } // guard dropped
         _ = self.event_tx.send(ProxyEvent::History(index, status));
         self.maybe_flush();
     }
@@ -178,30 +196,33 @@ impl ProxyState {
     }
 
     pub fn set_response(&self, index: usize, response: Response<Full<Bytes>>) {
-        let mut history = self.history.lock().unwrap();
-        history[index].response = Some(response);
-        history[index].status = Status::Done;
-        let response = history[index].response.as_ref().unwrap();
-        let status = response.status();
-        let length = response
-            .body()
-            .clone()
-            .into_inner()
-            .map_or(0, |body| body.len());
+        {
+            let mut history = self.history.lock().unwrap();
+            history[index].response = Some(response);
+            history[index].status = Status::Done;
+            let response = history[index].response.as_ref().unwrap();
+            let status = response.status();
+            let length = response
+                .body()
+                .clone()
+                .into_inner()
+                .map_or(0, |body| body.len());
 
-        let mime = SharedString::from(
-            response
-                .headers()
-                .get(header::CONTENT_TYPE)
-                .and_then(|value| value.to_str().ok())
-                .unwrap_or_default()
-                .to_string(),
-        );
-        let row = &mut history[index].row;
-        row.status = Some(status);
-        row.length = length;
-        row.end_response_timer = Some(SystemTime::now());
-        row.mime = mime;
+            let mime = SharedString::from(
+                response
+                    .headers()
+                    .get(header::CONTENT_TYPE)
+                    .and_then(|value| value.to_str().ok())
+                    .unwrap_or_default()
+                    .to_string(),
+            );
+            let row = &mut history[index].row;
+            row.status = Some(status);
+            row.length = length;
+            row.end_response_timer = Some(SystemTime::now());
+            row.mime = mime;
+        } // guard dropped
+
         // Notify UI that a request completed
         _ = self.event_tx.send(ProxyEvent::History(index, Status::Done));
         self.maybe_flush();
@@ -209,16 +230,23 @@ impl ProxyState {
 
     fn maybe_flush(&self) {
         let cursor = self.flush_cursor.load(Ordering::Relaxed);
-        let history = self.history.lock().unwrap();
-        if history.len() - cursor >= FLUSH_EVERY
+        let items_to_flush = {
+            let history = self.history.lock().unwrap();
+            if history.len() - cursor >= FLUSH_EVERY {
+                Some(history[cursor..].to_vec())
+            } else {
+                None
+            }
+        }; // guard dropped
+
+        if let Some(items) = items_to_flush
             && let Some(db) = &self.disk
         {
-            // indexes stay stable because we never truncate the Vec
-            if let Err(e) = db.flush(&history[cursor..], cursor) {
+            if let Err(e) = db.flush(&items, cursor) {
                 eprintln!("history flush failed: {e}");
                 return;
             }
-            self.flush_cursor.store(history.len(), Ordering::Relaxed);
+            self.flush_cursor.store(cursor + items.len(), Ordering::Relaxed);
         }
     }
 }

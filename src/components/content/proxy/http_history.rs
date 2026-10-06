@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use zopra::hooks::Setter;
 use zopra::{component, hooks::use_state, view};
+use std::ops::Range;
 
 type HistoryRow = (
     usize,
@@ -88,25 +89,26 @@ pub fn shortcut_item(name: String, shortcut: String) {
 #[allow(clippy::too_many_lines)]
 #[component]
 pub fn http_history(proxy_state: Arc<ProxyState>) {
-    let (get_requests, set_requests) = use_state(Vec::<(usize, RequestRow)>::new());
     let (get_highlights, set_highlights) = use_state(HashMap::<usize, (u32, u32)>::new());
+    let (get_visible, set_visible) = use_state(0..1000usize);
+    let (get_total, set_total) = use_state(0usize);
     let (started, set_started) = use_state(false);
 
     if !*started {
         set_started(true);
         let state = Arc::clone(&proxy_state);
-        let set_rows = set_requests.clone();
+        let set_tot = set_total.clone();
         window
             .spawn(cx, move |cx_ref: &mut AsyncWindowContext| {
                 let mut async_cx = (*cx_ref).clone();
                 async move {
                     let mut rx = state.subscribe();
-                    let rows = state.history_rows();
-                    async_cx.update(|_, cx| set_rows(rows)).ok();
+                    let cnt = state.history_count();
+                    async_cx.update(|_, cx| set_tot(cnt)).ok();
                     while let Ok(event) = rx.recv().await {
                         if matches!(event, ProxyEvent::History(_, _)) {
-                            let rows = state.history_rows();
-                            async_cx.update(|_, cx| set_rows(rows)).ok();
+                            let cnt = state.history_count();
+                            async_cx.update(|_, cx| set_tot(cnt)).ok();
                         }
                     }
                 }
@@ -114,7 +116,9 @@ pub fn http_history(proxy_state: Arc<ProxyState>) {
             .detach();
     }
     let highlights = get_highlights(cx);
-    let requests = get_requests(cx);
+    let visible = get_visible(cx);
+    let total = get_total(cx);
+    let requests = proxy_state.history_slice((*visible).clone());
     let rows = requests
         .iter()
         .map(|(history_idx, row)| {
@@ -126,10 +130,22 @@ pub fn http_history(proxy_state: Arc<ProxyState>) {
             )
         })
         .collect::<Vec<_>>();
+    let current_range = (*visible).clone();
     view! {
         <div class="flex flex-col size-full bg-[#141517] text-[#ededed] w-auto">
             <DataTable
                 rows={rows}
+                rows_count={*total}
+                data_offset={visible.start}
+                on_visible_rows_changed={{
+                    let current_range = current_range.clone();
+                    let set_visible = set_visible.clone();
+                    move |range: Range<usize>, cx: &mut gpui_kit::App| {
+                        if range != current_range {
+                            set_visible.set(range, cx);
+                        }
+                    }
+                }}
                 row_selectable={true}
                 cell_selectable={false}
                 col_selectable={false}
