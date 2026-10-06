@@ -10,6 +10,9 @@ use std::sync::Arc;
 use zopra::hooks::Setter;
 use zopra::{component, hooks::use_state, view};
 use std::ops::Range;
+use zopra::components::declarative_table::DeclarativeTableDelegate;
+use gpui_kit::component::table::TableState;
+use crate::globals::FULL_ROW_RAM;
 
 type HistoryRow = (
     usize,
@@ -118,7 +121,12 @@ pub fn http_history(proxy_state: Arc<ProxyState>) {
     let highlights = get_highlights(cx);
     let visible = get_visible(cx);
     let total = get_total(cx);
-    let requests = proxy_state.history_slice((*visible).clone());
+
+    let requests = if FULL_ROW_RAM {
+        proxy_state.history_rows()
+    } else {
+        proxy_state.history_slice((*visible).clone())
+    };
     let rows = requests
         .iter()
         .map(|(history_idx, row)| {
@@ -135,14 +143,14 @@ pub fn http_history(proxy_state: Arc<ProxyState>) {
         <div class="flex flex-col size-full bg-[#141517] text-[#ededed] w-auto">
             <DataTable
                 rows={rows}
-                rows_count={*total}
-                data_offset={visible.start}
+                rows_count={if FULL_ROW_RAM { requests.len() } else { *total }}
+                data_offset={if FULL_ROW_RAM { 0 } else { visible.start }}
                 on_visible_rows_changed={{
                     let current_range = current_range.clone();
                     let set_visible = set_visible.clone();
                     move |range: Range<usize>, cx: &mut gpui_kit::App| {
-                        if range != current_range {
-                            set_visible.set(range, cx);
+                        if !FULL_ROW_RAM && range != current_range {
+                          set_visible.set(range, cx);
                         }
                     }
                 }}
@@ -151,100 +159,7 @@ pub fn http_history(proxy_state: Arc<ProxyState>) {
                 col_selectable={false}
                 loop_selection={true}
                 row_header={true}
-                on_context_menu={|req: &HistoryRow, _row_ix, menu, window, cx| {
-                    let url = format!("https://{}{}", req.1.host, req.1.uri);
-                    let history_idx = req.0;
-                    let set_highlights = req.3.clone();
-                    let highlight_menu = PopupMenu::build(window, cx, move |mut menu, _, _| {
-                        for (name, background, foreground) in COLORS {
-                            let color_name = name.to_string();
-                            let set_highlights = set_highlights.clone();
-                            menu = menu.item(
-                                PopupMenuItem::element(move |_, _| {
-                                    view! {
-                                        <div
-                                            class="flex flex-row w-full min-w-[150px] h-full items-center text-black bg-white"
-                                            bg={gpui::rgba(background)}
-                                            textColor={gpui::rgba(foreground)}
-                                        >
-                                            { color_name.clone() }
-                                        </div>
-                                    }
-                                    .into_any_element()
-                                })
-                                .on_click(move |_, _, cx| {
-                                    set_highlights.update(
-                                        |highlights| {
-                                            highlights.insert(history_idx, (background, foreground));
-                                        },
-                                        cx,
-                                    );
-                                }),
-                            );
-                        }
-
-                        let set_highlights = set_highlights.clone();
-                        menu.item(PopupMenuItem::separator()).item(
-                            PopupMenuItem::new("Clear highlight").on_click(move |_, _, cx| {
-                                set_highlights.update(|highlights| {
-                                    highlights.remove(&history_idx);
-                                }, cx);
-                            }),
-                        )
-                    });
-                    let dont_intercept_menu = PopupMenu::build(window, cx, |m, _, _| {
-                        m.item(PopupMenuItem::new("To this host"))
-                    });
-
-                    let do_intercept_menu = PopupMenu::build(window, cx, |m, _, _| {
-                        m.item(PopupMenuItem::new("Responses to this request"))
-                    });
-
-                    let browser_menu = PopupMenu::build(window, cx, |m, _, _| {
-                        m.item(PopupMenuItem::new("In original session"))
-                    });
-
-                    menu
-                        .item(PopupMenuItem::element(move |_, _| {
-                            view! {
-                                <div class="flex flex-row w-full items-center px-2 py-1 font-bold">
-                                    { url.clone() }
-                                </div>
-                            }
-                        }))
-                        .item(PopupMenuItem::separator())
-                        .item(PopupMenuItem::new("Add to scope"))
-                        .item(PopupMenuItem::separator())
-                        .item(PopupMenuItem::new("Forward"))
-                        .item(PopupMenuItem::new("Drop"))
-                        .item(PopupMenuItem::separator())
-                        .item(PopupMenuItem::new("Add notes"))
-                        .item(PopupMenuItem::submenu("Highlight", highlight_menu))
-                        .item(PopupMenuItem::separator())
-                        .item(PopupMenuItem::submenu("Don't intercept requests", dont_intercept_menu))
-                        .item(PopupMenuItem::submenu("Do intercept", do_intercept_menu))
-                        .item(PopupMenuItem::separator())
-                        .item(PopupMenuItem::new("Scan").disabled(true))
-                        .item(PopupMenuItem::separator())
-                        .item(PopupMenuItem::element(|window, cx| {
-                            view! {
-                                <ShortcutItem name={"Send to Intruder".to_string()} shortcut={"Ctrl+I".to_string()} />
-                            }.into_any_element()
-                        }).on_click(|_, _, _| println!("Intruder")))
-                        .item(PopupMenuItem::element(|window, cx| {
-                            view! {
-                                <ShortcutItem name={"Send to Repeater".to_string()} shortcut={"Ctrl+R".to_string()} />
-                            }.into_any_element()
-                        }).on_click(|_, _, _| println!("Repeater")))
-                        .item(PopupMenuItem::new("Send to Sequencer"))
-                        .item(PopupMenuItem::element(|window, cx| {
-                            view! {
-                                <ShortcutItem name={"Send to Organizer".to_string()} shortcut={"Ctrl+O".to_string()} />
-                            }.into_any_element()
-                        }).on_click(|_, _, _| println!("Organizer")))
-                        .item(PopupMenuItem::new("Send to Comparer"))
-                        .item(PopupMenuItem::submenu("Request in browser", browser_menu))
-                }}
+                on_context_menu={history_context_menu}
             >
                 <Col id="id" title="#" width={50.} r={|req| highlighted_cell(req, req.0.to_string())} />
                 <Col id="host" title="Host" width={150.} r={|req| highlighted_cell(req, req.1.host.clone())} sortable />
@@ -256,4 +171,102 @@ pub fn http_history(proxy_state: Arc<ProxyState>) {
             </DataTable>
         </div>
     }
+}
+
+// on rigth click
+fn history_context_menu(
+    req: &HistoryRow,
+    _row_ix: usize,
+    menu: PopupMenu,
+    window: &mut Window,
+    cx: &mut Context<TableState<DeclarativeTableDelegate<HistoryRow>>>,
+) -> PopupMenu {
+  let url = format!("https://{}{}", req.1.host, req.1.uri);
+  let history_idx = req.0;
+  let set_highlights = req.3.clone();
+  let highlight_menu = PopupMenu::build(window, cx, move |mut menu, _, _| {
+    for (name, background, foreground) in COLORS {
+        let color_name = name.to_string();
+        let set_highlights = set_highlights.clone();
+        menu = menu.item(
+            PopupMenuItem::element(move |_, _| {
+                view! {
+                    <div
+                        class="flex flex-row w-full min-w-[150px] h-full items-center text-black bg-white"
+                        bg={gpui::rgba(background)}
+                        textColor={gpui::rgba(foreground)}
+                    >
+                        { color_name.clone() }
+                    </div>
+                }
+                .into_any_element()
+            })
+            .on_click(move |_, _, cx| {
+                set_highlights.update(
+                    |highlights| {
+                        highlights.insert(history_idx, (background, foreground));
+                    },
+                    cx,
+                );
+            }),
+        );
+    }
+    let set_highlights = set_highlights.clone();
+    menu.item(PopupMenuItem::separator()).item(
+        PopupMenuItem::new("Clear highlight").on_click(move |_, _, cx| {
+            set_highlights.update(|highlights| {
+                highlights.remove(&history_idx);
+            }, cx);
+        }),
+    )
+  });
+  let dont_intercept_menu = PopupMenu::build(window, cx, |m, _, _| {
+    m.item(PopupMenuItem::new("To this host"))
+  });
+  let do_intercept_menu = PopupMenu::build(window, cx, |m, _, _| {
+    m.item(PopupMenuItem::new("Responses to this request"))
+  });
+  let browser_menu = PopupMenu::build(window, cx, |m, _, _| {
+    m.item(PopupMenuItem::new("In original session"))
+  });
+  menu
+    .item(PopupMenuItem::element(move |_, _| {
+        view! {
+            <div class="flex flex-row w-full items-center px-2 py-1 font-bold">
+                { url.clone() }
+            </div>
+        }
+    }))
+    .item(PopupMenuItem::separator())
+    .item(PopupMenuItem::new("Add to scope"))
+    .item(PopupMenuItem::separator())
+    .item(PopupMenuItem::new("Forward"))
+    .item(PopupMenuItem::new("Drop"))
+    .item(PopupMenuItem::separator())
+    .item(PopupMenuItem::new("Add notes"))
+    .item(PopupMenuItem::submenu("Highlight", highlight_menu))
+    .item(PopupMenuItem::separator())
+    .item(PopupMenuItem::submenu("Don't intercept requests", dont_intercept_menu))
+    .item(PopupMenuItem::submenu("Do intercept", do_intercept_menu))
+    .item(PopupMenuItem::separator())
+    .item(PopupMenuItem::new("Scan").disabled(true))
+    .item(PopupMenuItem::separator())
+    .item(PopupMenuItem::element(|window, cx| {
+        view! {
+            <ShortcutItem name={"Send to Intruder".to_string()} shortcut={"Ctrl+I".to_string()} />
+        }.into_any_element()
+    }).on_click(|_, _, _| println!("Intruder")))
+    .item(PopupMenuItem::element(|window, cx| {
+        view! {
+            <ShortcutItem name={"Send to Repeater".to_string()} shortcut={"Ctrl+R".to_string()} />
+        }.into_any_element()
+    }).on_click(|_, _, _| println!("Repeater")))
+    .item(PopupMenuItem::new("Send to Sequencer"))
+    .item(PopupMenuItem::element(|window, cx| {
+        view! {
+            <ShortcutItem name={"Send to Organizer".to_string()} shortcut={"Ctrl+O".to_string()} />
+        }.into_any_element()
+    }).on_click(|_, _, _| println!("Organizer")))
+    .item(PopupMenuItem::new("Send to Comparer"))
+    .item(PopupMenuItem::submenu("Request in browser", browser_menu))
 }

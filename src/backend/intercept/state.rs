@@ -16,6 +16,7 @@ use std::sync::Mutex as StdMutex;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::time::SystemTime;
 use tokio::sync::{broadcast, oneshot::Sender};
+use crate::globals::{PERSIST_HTTP_HISTORY_DATA, CLEAR_HTTP_HISTORY_WHEN_NO_BROWSER};
 
 #[derive(Clone)]
 pub enum ProxyEvent {
@@ -186,7 +187,7 @@ impl ProxyState {
             } else if status == Status::Failed {
                 history[index].row.status = Some(StatusCode::BAD_GATEWAY);
             }
-        } // guard dropped
+        }
         _ = self.event_tx.send(ProxyEvent::History(index, status));
         self.maybe_flush();
     }
@@ -221,10 +222,9 @@ impl ProxyState {
             row.length = length;
             row.end_response_timer = Some(SystemTime::now());
             row.mime = mime;
-        } // guard dropped
+        }
 
-        // Notify UI that a request completed
-        _ = self.event_tx.send(ProxyEvent::History(index, Status::Done));
+        self.event_tx.send(ProxyEvent::History(index, Status::Done)).ok();
         self.maybe_flush();
     }
 
@@ -237,7 +237,7 @@ impl ProxyState {
             } else {
                 None
             }
-        }; // guard dropped
+        };
 
         if let Some(items) = items_to_flush
             && let Some(db) = &self.disk
@@ -247,6 +247,20 @@ impl ProxyState {
                 return;
             }
             self.flush_cursor.store(cursor + items.len(), Ordering::Relaxed);
+        }
+    }
+
+    pub fn clear_history_on_browser_close(&self) {
+        if CLEAR_HTTP_HISTORY_WHEN_NO_BROWSER {
+            // clear ram history
+            self.history.lock().unwrap().clear();
+            self.flush_cursor.store(0, Ordering::Relaxed);
+
+            // if persistence is off, wipe the disk too bwahaha
+            if !PERSIST_HTTP_HISTORY_DATA && let Some(db) = &self.disk {
+                db.clear_history().ok();
+            }
+            self.event_tx.send(ProxyEvent::History(0, Status::Dropped)).ok();
         }
     }
 }

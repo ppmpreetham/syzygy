@@ -5,6 +5,7 @@ mod assets;
 mod backend;
 pub mod components;
 mod config;
+pub mod globals;
 
 use crate::backend::{ProxyState, start_proxy};
 use app::app;
