@@ -30,6 +30,7 @@ pub(super) fn inspector(request: String) {
         </nav>
         <div class="flex-1 w-full text-[#ededed]">
           {match *active_tab {
+            // TODO: match it with other tabs later
             _ => view! { <div></div> }.into_any_element(),
           }}
         </div>

@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use directories::ProjectDirs;
 use rcgen::{
     BasicConstraints, CertificateParams, DistinguishedName, DnType, DnValue, IsCa, Issuer, KeyPair,
@@ -13,10 +13,11 @@ pub fn storage_path() -> Option<PathBuf> {
         .map(|proj_dirs| proj_dirs.config_dir().to_path_buf())
 }
 
-
 // save the certificate on first launch
 fn ca_paths() -> Result<(PathBuf, PathBuf)> {
-    let keys_dir = storage_path().ok_or_else(|| anyhow!("No path"))?.join("keys");
+    let keys_dir = storage_path()
+        .ok_or_else(|| anyhow!("No path"))?
+        .join("keys");
     fs::create_dir_all(&keys_dir)?;
 
     Ok((

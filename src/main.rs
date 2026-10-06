@@ -6,45 +6,43 @@ mod backend;
 pub mod components;
 mod config;
 
+use crate::backend::{ProxyState, start_proxy};
 use app::app;
 use assets::AppAssets;
+use gpui_kit::component::theme::{Theme, ThemeMode};
 use gpui_kit::component::{Root, TitleBar};
 use gpui_kit::gpui::WindowBackgroundAppearance;
 use gpui_kit::*;
 use std::sync::Arc;
-use crate::backend::{ProxyState, start_proxy};
+use std::{future, thread};
+use tokio::runtime;
 
 pub struct Main {
     proxy_state: Arc<ProxyState>,
 }
 impl Render for Main {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        app(self.proxy_state.clone(), window, cx)
+        app(&self.proxy_state, window, cx)
     }
 }
 
 fn main() {
     let app = gpui_kit::application().with_assets(AppAssets);
     let config = config::Config::new();
-
     let proxy_state = ProxyState::new();
 
     app.run(move |cx| {
         let proxy_for_server = Arc::clone(&proxy_state);
-        std::thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new().unwrap();
+        thread::spawn(move || {
+            let rt = runtime::Runtime::new().unwrap();
             rt.block_on(async {
                 start_proxy(proxy_for_server).await;
-                std::future::pending::<()>().await;
+                future::pending::<()>().await;
             });
         });
 
         gpui_kit::init(cx);
-        gpui_kit::component::theme::Theme::change(
-            gpui_kit::component::theme::ThemeMode::Dark,
-            None,
-            cx,
-        );
+        Theme::change(ThemeMode::Dark, None, cx);
 
         let window_options = WindowOptions {
             window_bounds: Some(config.window_size),

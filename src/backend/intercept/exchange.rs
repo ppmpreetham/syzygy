@@ -1,6 +1,6 @@
 use gpui_kit::http_client::{Request, Response};
-use http_body_util::{Full};
-use http_mitm_proxy::hyper::body::{Bytes,};
+use http_body_util::Full;
+use http_mitm_proxy::hyper::body::Bytes;
 
 use crate::backend::uimeta::RequestRow;
 

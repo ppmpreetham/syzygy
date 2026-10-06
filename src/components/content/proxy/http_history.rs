@@ -2,18 +2,19 @@ use crate::backend::ProxyState;
 use crate::backend::intercept::state::ProxyEvent;
 use crate::backend::uimeta::RequestRow;
 use gpui_kit::component::menu::{PopupMenu, PopupMenuItem};
+use gpui_kit::gpui::SharedString;
 use gpui_kit::*;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::sync::Arc;
+use zopra::hooks::Setter;
 use zopra::{component, hooks::use_state, view};
-use gpui_kit::gpui::SharedString;
 
 type HistoryRow = (
     usize,
     RequestRow,
     Option<(u32, u32)>,
-    zopra::hooks::Setter<HashMap<usize, (u32, u32)>>,
+    Setter<HashMap<usize, (u32, u32)>>,
 );
 
 fn row_time(row: &RequestRow) -> String {
@@ -84,6 +85,7 @@ pub fn shortcut_item(name: String, shortcut: String) {
     }
 }
 
+#[allow(clippy::too_many_lines)]
 #[component]
 pub fn http_history(proxy_state: Arc<ProxyState>) {
     let (get_requests, set_requests) = use_state(Vec::<(usize, RequestRow)>::new());

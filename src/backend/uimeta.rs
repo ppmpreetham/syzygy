@@ -1,14 +1,15 @@
 use std::path::Path;
 
 use gpui_kit::accesskit::Uuid;
+use gpui_kit::gpui::SharedString;
 use gpui_kit::http_client::Request;
+use http::request::Parts;
 use http_mitm_proxy::hyper::body::Incoming;
 use http_mitm_proxy::hyper::http::header::COOKIE;
 use http_mitm_proxy::hyper::http::{HeaderValue, Method};
 use std::net::{IpAddr, Ipv4Addr};
 use std::time::SystemTime;
 use wry::http;
-use gpui_kit::gpui::SharedString;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AddressType {
@@ -54,7 +55,7 @@ pub struct RequestRow {
 pub struct FullRequest {
     pub forwarded: bool,
     pub row: RequestRow,
-    pub parts: http::request::Parts,
+    pub parts: Parts,
     pub body: Incoming,
 }
 
@@ -94,7 +95,7 @@ pub fn row_converter(req: Request<Incoming>) -> FullRequest {
         length: 0,
         tls,
         // TODO: idk how to implement the ip yet, currently so nvm
-        ip: IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+        ip: IpAddr::V4(Ipv4Addr::LOCALHOST),
         // TODO: idk how to implement the ip yet, currently so nvm
         port: 8080,
         mime: SharedString::from(""),

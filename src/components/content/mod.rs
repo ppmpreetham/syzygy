@@ -33,7 +33,7 @@ pub fn main_content(active_tab: AppTab, proxy_state: Arc<ProxyState>) {
             {match active_tab {
                 AppTab::Dashboard => view! { <Dashboard /> }.into_any_element(),
                 AppTab::Target => view! { <Target /> }.into_any_element(),
-                AppTab::Proxy => view! { <Proxy proxy_state={proxy_state.clone()} /> }.into_any_element(),
+                AppTab::Proxy => view! { <Proxy proxy_state={proxy_state} /> }.into_any_element(),
                 AppTab::Intruder => view! { <Intruder /> }.into_any_element(),
                 AppTab::Repeater => view! { <Repeater /> }.into_any_element(),
                 AppTab::Decoder => view! { <Decoder /> }.into_any_element(),

@@ -1,13 +1,15 @@
-use gpui_kit::http_client::{Request};
-use http_body_util::{Full};
-use http_mitm_proxy::hyper::body::{Bytes};
+use gpui_kit::http_client::Request;
+use http_body_util::Full;
+use http_mitm_proxy::hyper::body::Bytes;
+use http_mitm_proxy::hyper::header::{self, TRANSFER_ENCODING};
+use http_mitm_proxy::hyper::{self, Version};
 
-pub fn parse_version(version: &str) -> Option<http_mitm_proxy::hyper::Version> {
+pub fn parse_version(version: &str) -> Option<Version> {
     match version {
-        "HTTP/0.9" => Some(http_mitm_proxy::hyper::Version::HTTP_09),
-        "HTTP/1.0" => Some(http_mitm_proxy::hyper::Version::HTTP_10),
-        "HTTP/1.1" => Some(http_mitm_proxy::hyper::Version::HTTP_11),
-        "HTTP/2" | "HTTP/2.0" => Some(http_mitm_proxy::hyper::Version::HTTP_2),
+        "HTTP/0.9" => Some(hyper::Version::HTTP_09),
+        "HTTP/1.0" => Some(hyper::Version::HTTP_10),
+        "HTTP/1.1" => Some(hyper::Version::HTTP_11),
+        "HTTP/2" | "HTTP/2.0" => Some(hyper::Version::HTTP_2),
         _ => None,
     }
 }
@@ -30,12 +32,9 @@ pub fn parse_request(raw: &str) -> Option<Request<Full<Bytes>>> {
     let mut request = builder
         .body(Full::new(Bytes::copy_from_slice(body.as_bytes())))
         .ok()?;
+    request.headers_mut().remove(TRANSFER_ENCODING);
     request
         .headers_mut()
-        .remove(http_mitm_proxy::hyper::header::TRANSFER_ENCODING);
-    request.headers_mut().insert(
-        http_mitm_proxy::hyper::header::CONTENT_LENGTH,
-        body.len().into(),
-    );
+        .insert(header::CONTENT_LENGTH, body.len().into());
     Some(request)
 }

@@ -1,13 +1,15 @@
-use crate::{backend::ProxyState, components::AppTab};
 use crate::components::content::MainContent;
 use crate::components::sidebar::AppSidebar;
 use crate::components::titlebar::AppTitleBar;
+use crate::{backend::ProxyState, components::AppTab};
+
 use gpui_kit::*;
+
 use std::sync::Arc;
 use zopra::{component, hooks::use_state, view};
 
 #[component]
-pub fn app(proxy_state: Arc<ProxyState>) {
+pub fn app(proxy_state: &Arc<ProxyState>) {
     let (collapsed, set_collapsed) = use_state(false);
     let (app_tab, set_app_tab) = use_state(AppTab::Proxy);
 

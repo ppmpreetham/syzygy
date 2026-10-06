@@ -55,9 +55,20 @@ zopra = { path = "../zopra" }
 zopra_macros = { path = "../zopra/zopra_macros" }
 
 [lints.rust]
-unused = "warn"
-absolute_paths = "warn"
+unused = "allow"
+
 
 [lints.clippy]
-perf = "warn"
-complexity = "warn"
+unreadable_literal = "allow"
+pedantic = { level = "warn", priority = -1 }
+
+perf = { level = "warn", priority = -1 }
+complexity = { level = "warn", priority = -1 }
+
+dbg_macro = "warn"
+
+cast_possible_truncation = "allow"
+cast_precision_loss = "allow"
+
+wildcard_imports = "allow"
+upper_case_acronyms = "allow"

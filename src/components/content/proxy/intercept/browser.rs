@@ -80,10 +80,10 @@ fn browser_root(webview_ctrl: WebViewController, input_state: Entity<input::Inpu
                     let input = input_state.clone();
                     move |_, _, cx| {
                         let text = input.read(cx).text().to_string();
-                        let url = if !text.starts_with("http") {
-                            format!("https://{}", text)
-                        } else {
+                        let url = if text.starts_with("http") {
                             text
+                        } else {
+                            format!("https://{text}")
                         };
                         c.load_url(&url, cx);
                     }

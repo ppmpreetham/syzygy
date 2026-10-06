@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use gpui_kit::http_client::{Response};
-use http_body_util::{Full};
-use http_mitm_proxy::hyper::body::{Bytes};
+use crate::backend::proxy::certificate::certificate_issuer;
+use gpui_kit::http_client::Response;
+use http_body_util::Full;
+use http_mitm_proxy::hyper::body::Bytes;
 use http_mitm_proxy::hyper::service::service_fn;
 use http_mitm_proxy::moka::sync::Cache;
 use http_mitm_proxy::{DefaultClient, MitmProxy};
-use crate::backend::proxy::certificate::certificate_issuer;
 
 use super::interception::catcher;
 use super::state::ProxyState;

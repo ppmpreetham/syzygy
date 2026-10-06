@@ -1,13 +1,14 @@
-use gpui_kit::component::{menu, menu::PopupMenuItem};
-use gpui_kit::prelude::FluentBuilder;
-use gpui_kit::*;
-use zopra::{use_effect, component, hooks::use_state, view};
-
 use crate::backend::ProxyState;
 use crate::backend::intercept::parse::parse_request;
 use crate::backend::intercept::state::ProxyEvent;
 use crate::backend::uimeta::RequestRow;
+use component::input::EditorState;
+use gpui_kit::component;
+use gpui_kit::component::{menu, menu::PopupMenuItem};
+use gpui_kit::prelude::FluentBuilder;
+use gpui_kit::*;
 use std::sync::Arc;
+use zopra::{component, hooks::use_state, use_effect, view};
 
 mod browser;
 mod inspector;
@@ -64,9 +65,11 @@ pub fn intercept(proxy_state: Arc<ProxyState>) {
 
     let selected = (*selected_idx).and_then(|i| requests.get(i));
     let selected_id = selected.map(|request| request.0);
-    let selected_host_val = selected.map(|request| request.1.host.clone()).unwrap_or_default();
+    let selected_host_val = selected
+        .map(|request| request.1.host.clone())
+        .unwrap_or_default();
 
-    let (req_content, set_req_content) = use_state("No request selected".to_string());
+    let (req_content, set_req_content) = use_state("No request selected");
     let (req_host, set_req_host) = use_state(String::new());
 
     let state = proxy_state.clone();
@@ -84,14 +87,13 @@ pub fn intercept(proxy_state: Arc<ProxyState>) {
         [selected_id]
     );
 
-    let req_content = (*req_content).clone();
+    let req_content = &(*req_content);
     let req_host = (*req_host).clone();
 
     let (forward_action, set_forward_action) = use_state(ForwardAction::Forward);
     let (drop_action, set_drop_action) = use_state(DropAction::Drop);
     let (intercept_state, set_intercept_state) = use_state(proxy_state.intercept_enabled());
-    let (editor_entity, set_editor_entity) =
-        use_state(None::<Entity<gpui_kit::component::input::EditorState>>);
+    let (editor_entity, set_editor_entity) = use_state(None::<Entity<EditorState>>);
 
     let build_fwd_menu = {
         let set_fwd = set_forward_action.clone();
@@ -161,13 +163,12 @@ pub fn intercept(proxy_state: Arc<ProxyState>) {
                 let set_intercept_state = set_intercept_state.clone();
                 move |_, _, cx| {
                   match *set_forward_action.current() {
-                      ForwardAction::Forward => if let Some(id) = selected_id {
-                        if let Some(edited) = editor_entity.as_ref().and_then(|editor| {
+                      ForwardAction::Forward => if let Some(id) = selected_id && let Some(edited) = editor_entity.as_ref().and_then(|editor| {
                             parse_request(editor.read(cx).value().as_ref())
                         }) {
                             set_requests(|requests| requests.retain(|request| request.0 != id));
                             state.forward(id, Some(edited));
-                        }
+
                       },
                       ForwardAction::ForwardAll => {
                         set_requests.update(Vec::clear, cx);

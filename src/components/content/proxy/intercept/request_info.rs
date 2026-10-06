@@ -8,7 +8,7 @@ use zopra::{
 };
 
 #[component]
-pub fn RequestInfo(content: String, set_editor_entity: Setter<Option<Entity<EditorState>>>) {
+pub fn RequestInfo(content: SharedString, set_editor_entity: Setter<Option<Entity<EditorState>>>) {
     let (editor, set_editor) = use_state(None::<Entity<EditorState>>);
     let (prev_content, set_prev_content) = use_state(String::new());
 
@@ -43,7 +43,7 @@ pub fn RequestInfo(content: String, set_editor_entity: Setter<Option<Entity<Edit
                 "Request Info"
             </div>
             <div class="flex-1 size-full relative">
-                { Editor::new(&ed).size_full() }
+                { Editor::new(ed).size_full() }
             </div>
         </div>
     }
