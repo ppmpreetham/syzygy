@@ -19,7 +19,7 @@ use self::comparer::Comparer;
 use self::dashboard::Dashboard;
 use self::decoder::Decoder;
 use self::extensions::Extensions;
-use self::intruder::Intruder;
+use intruder::Intruder;
 use self::logger::Logger;
 use self::organizer::Organizer;
 use self::proxy::Proxy;
