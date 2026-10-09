@@ -3,38 +3,12 @@ use gpui_kit::component::Icon;
 use gpui_kit::*;
 use zopra::components::webview::WebView;
 use zopra::{WebViewController, component};
+use zopra::hooks::{use_input, use_event};
 
 use crate::backend::proxy_config;
 
 struct BrowserWindow {
     webview_ctrl: WebViewController,
-    input_state: Entity<input::InputState>,
-}
-
-fn init_browser(
-    webview_ctrl: WebViewController,
-    input_state: Entity<input::InputState>,
-    cx: &mut Context<BrowserWindow>,
-) -> BrowserWindow {
-    let ctrl = webview_ctrl.clone();
-    let input = input_state.clone();
-    cx.subscribe(&input_state, move |_, _, event, cx| {
-        if let input::InputEvent::PressEnter { .. } = event {
-            let text = input.read(cx).text().to_string();
-            let url = if !text.starts_with("http") && !text.starts_with("file://") {
-                format!("https://{text}")
-            } else {
-                text
-            };
-            ctrl.load_url(&url, cx);
-        }
-    })
-    .detach();
-
-    BrowserWindow {
-        webview_ctrl,
-        input_state,
-    }
 }
 
 impl Render for BrowserWindow {
@@ -42,15 +16,33 @@ impl Render for BrowserWindow {
         zopra::view! {
           <BrowserRoot
             webview_ctrl={self.webview_ctrl.clone()}
-            input_state={self.input_state.clone()}
           />
         }
     }
 }
 
 #[component]
-fn browser_root(webview_ctrl: WebViewController, input_state: Entity<input::InputState>) {
+fn browser_root(webview_ctrl: WebViewController) {
     let ctrl = webview_ctrl;
+    let input_state = use_input(window, cx);
+
+    // Handle Enter key for navigation
+    use_event(&input_state, {
+        let ctrl = ctrl.clone();
+        let input_state = input_state.clone();
+        move |event, cx| {
+            if let input::InputEvent::PressEnter { .. } = event {
+                let text = input_state.read(cx).text().to_string();
+                let url = if !text.starts_with("http") && !text.starts_with("file://") {
+                    format!("https://{text}")
+                } else {
+                    text
+                };
+                ctrl.load_url(&url, cx);
+            }
+        }
+    }, cx);
+
     zopra::view! {
         <div class="flex flex-col size-full p-2 gap-2 ">
             <div class="flex flex-row gap-2 items-center px-2 py-1 rounded shadow-lg bg-[#18181b]">
@@ -87,7 +79,7 @@ fn browser_root(webview_ctrl: WebViewController, input_state: Entity<input::Inpu
                         };
                         c.load_url(&url, cx);
                     }
-                }} class="bg-blue-600  text-white px-4 py-1 rounded">"Go"</button>
+                }} class="bg-blue-600 text-white px-4 py-1 rounded">"Go"</button>
             </div>
             <div class="size-full flex-1 relative rounded overflow-hidden">
                 <WebView
@@ -104,11 +96,6 @@ fn browser_root(webview_ctrl: WebViewController, input_state: Entity<input::Inpu
 
 pub(super) fn open_browser(window: &mut Window, cx: &mut App) {
     let webview_ctrl = WebViewController::default();
-    let input_state = cx.new(|cx| {
-        let mut state = input::InputState::new(window, cx);
-        state.set_value("", window, cx);
-        state
-    });
     let options = WindowOptions {
         window_bounds: Some(WindowBounds::Windowed(Bounds::centered(
             None,
@@ -121,7 +108,8 @@ pub(super) fn open_browser(window: &mut Window, cx: &mut App) {
 
     cx.open_window(options, |window, cx| {
         window.activate_window();
-        cx.new(|cx| init_browser(webview_ctrl, input_state, cx))
+        cx.new(|_cx| BrowserWindow { webview_ctrl })
     })
     .expect("failed to open browser window");
 }
+
