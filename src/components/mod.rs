@@ -1,6 +1,7 @@
 pub mod content;
 pub mod sidebar;
 pub mod titlebar;
+pub mod common;
 
 use strum_macros::FromRepr;
 

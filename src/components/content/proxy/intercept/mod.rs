@@ -22,8 +22,26 @@ use models::{DropAction, ForwardAction};
 use request_info::RequestInfo;
 use request_table::RequestTable;
 
+use gpui_kit::component::highlighter::{GrammarConfig, LanguageRegistry};
+use std::sync::Once;
+
+static INIT_GRAMMAR: Once = Once::new();
+
 #[component]
 pub fn intercept(proxy_state: Arc<ProxyState>) {
+    INIT_GRAMMAR.call_once(|| {
+        LanguageRegistry::singleton().register(
+            "http",
+            &GrammarConfig::new(
+                "http",
+                crate::components::common::tree_sitter::LANGUAGE.clone().into(),
+                vec![],
+                include_str!("queries/highlights.scm"),
+                include_str!("queries/injections.scm"),
+                "",
+            ),
+        );
+    });
     let (get_requests, set_requests) = use_state(Vec::<(usize, RequestRow)>::new());
     let (get_loop, set_loop) = use_state(false);
 
