@@ -8,6 +8,7 @@ pub mod organizer;
 pub mod proxy;
 pub mod repeater;
 pub mod target;
+pub mod settings;
 
 use crate::backend::ProxyState;
 use crate::components::AppTab;
