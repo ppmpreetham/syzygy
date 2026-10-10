@@ -42,7 +42,7 @@ impl Config {
 
     /// inspired from oncelock crate
     pub fn load_or_create(file_path: &Path) -> Self {
-      Self::load(&file_path)
+      Self::load(file_path)
         .unwrap_or_else(|_| Self::create(file_path).unwrap_or_default())
     }
 }

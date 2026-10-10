@@ -7,11 +7,14 @@ use gpui_kit::*;
 
 use std::sync::Arc;
 use zopra::{component, hooks::use_state, view};
+use crate::components::content::intruder::state::IntruderState;
 
 #[component]
 pub fn app(proxy_state: &Arc<ProxyState>) {
     let (collapsed, set_collapsed) = use_state(false);
     let (app_tab, set_app_tab) = use_state(AppTab::Proxy);
+    let (intruders, set_intruders) = use_state(vec![IntruderState::default()]);
+    let (intruder_tab, set_intruder_tab) = use_state(0usize);
 
     view! {
         <div class="flex flex-col size-full bg-[#141517] text-[#ededed]">
@@ -34,11 +37,11 @@ pub fn app(proxy_state: &Arc<ProxyState>) {
                         <AppSidebar
                             collapsed={*collapsed}
                             active_tab={*app_tab}
-                            set_active_tab={set_app_tab}
+                            set_active_tab={set_app_tab.clone()}
                         />
                     </ResizablePanel>
                     <ResizablePanel>
-                        <MainContent active_tab={*app_tab} proxy_state={proxy_state.clone()} />
+                        <MainContent active_tab={*app_tab} set_app_tab={set_app_tab.clone()} proxy_state={proxy_state.clone()} intruders={intruders.clone()} set_intruders={set_intruders.clone()} intruder_tab={intruder_tab.clone()} set_intruder_tab={set_intruder_tab.clone()} />
                     </ResizablePanel>
                 </Resizable>
             </div>

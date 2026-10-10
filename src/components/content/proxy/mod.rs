@@ -1,7 +1,9 @@
 use gpui_kit::*;
 use std::sync::Arc;
 use strum_macros::FromRepr;
-use zopra::{component, hooks::use_state, view};
+use zopra::{component, hooks::use_state, hooks::Setter, view};
+use crate::components::AppTab;
+use crate::components::content::intruder::state::IntruderState;
 
 pub mod http_history;
 pub mod intercept;
@@ -25,7 +27,7 @@ pub enum ProxyTab {
 }
 
 #[component]
-pub fn proxy(proxy_state: Arc<ProxyState>) {
+pub fn proxy(proxy_state: Arc<ProxyState>, set_app_tab: Setter<AppTab>, set_intruders: Setter<Vec<IntruderState>>, set_intruder_tab: Setter<usize>) {
     let (active_tab, set_active_tab) = use_state(ProxyTab::Intercept);
 
     view! {
@@ -35,7 +37,7 @@ pub fn proxy(proxy_state: Arc<ProxyState>) {
                 selected_index={*active_tab as usize}
                 on_click={move |index, _, cx| {
                     if let Some(tab) = ProxyTab::from_repr(*index) {
-                        set_active_tab(tab);
+                        set_active_tab.set(tab, cx);
                     }
                 }}
                 class="px-4"
@@ -49,7 +51,7 @@ pub fn proxy(proxy_state: Arc<ProxyState>) {
             <div class="flex-1 w-full text-[#ededed]">
                 {match *active_tab {
                     ProxyTab::Intercept => view! { <Intercept proxy_state={proxy_state.clone()} /> }.into_any_element(),
-                    ProxyTab::HttpHistory => view! { <HttpHistory proxy_state={proxy_state.clone()} /> }.into_any_element(),
+                    ProxyTab::HttpHistory => view! { <HttpHistory proxy_state={proxy_state.clone()} set_app_tab={set_app_tab.clone()} set_intruders={set_intruders.clone()} set_intruder_tab={set_intruder_tab.clone()} /> }.into_any_element(),
                     ProxyTab::WebSocketsHistory => view! { <WebsocketsHistory /> }.into_any_element(),
                     ProxyTab::Options => view! { <Options /> }.into_any_element(),
                 }}
@@ -57,3 +59,6 @@ pub fn proxy(proxy_state: Arc<ProxyState>) {
         </div>
     }
 }
+
+
+

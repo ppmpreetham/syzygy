@@ -25,6 +25,7 @@ impl Default for IntruderState {
 }
 
 impl IntruderState {
+    #[must_use]
     pub fn new(req_id: usize, target: SharedString, raw_request: String) -> Self {
         Self {
             req_id,

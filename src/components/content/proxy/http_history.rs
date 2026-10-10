@@ -1,6 +1,8 @@
 use crate::backend::ProxyState;
 use crate::backend::intercept::state::ProxyEvent;
 use crate::backend::uimeta::RequestRow;
+use crate::components;
+use crate::components::content::intruder;
 use gpui_kit::component::menu::{PopupMenu, PopupMenuItem};
 use gpui_kit::gpui::SharedString;
 use gpui_kit::*;
@@ -91,7 +93,7 @@ pub fn shortcut_item(name: String, shortcut: String) {
 
 #[allow(clippy::too_many_lines)]
 #[component]
-pub fn http_history(proxy_state: Arc<ProxyState>) {
+pub fn http_history(proxy_state: Arc<ProxyState>, set_app_tab: Setter<components::AppTab>, set_intruders: Setter<Vec<intruder::state::IntruderState>>, set_intruder_tab: Setter<usize>) {
     let (get_highlights, set_highlights) = use_state(HashMap::<usize, (u32, u32)>::new());
     let (get_visible, set_visible) = use_state(0..1000usize);
     let (get_total, set_total) = use_state(0usize);
@@ -159,7 +161,13 @@ pub fn http_history(proxy_state: Arc<ProxyState>) {
                 col_selectable={false}
                 loop_selection={true}
                 row_header={true}
-                on_context_menu={history_context_menu}
+                on_context_menu={{
+                    let set_app_tab = set_app_tab.clone();
+                    let set_intruders = set_intruders.clone();
+                    move |req, row_ix, menu, window, cx| {
+                        history_context_menu(req, row_ix, menu, window, cx, set_app_tab.clone(), set_intruders.clone(), set_intruder_tab.clone())
+                    }
+                }}
             >
                 <Col id="id" title="#" width={50.} r={|req| highlighted_cell(req, req.0.to_string())} />
                 <Col id="host" title="Host" width={150.} r={|req| highlighted_cell(req, req.1.host.clone())} sortable />
@@ -179,8 +187,7 @@ fn history_context_menu(
     _row_ix: usize,
     menu: PopupMenu,
     window: &mut Window,
-    cx: &mut Context<TableState<DeclarativeTableDelegate<HistoryRow>>>,
-) -> PopupMenu {
+    cx: &mut Context<TableState<DeclarativeTableDelegate<HistoryRow>>>, set_app_tab: Setter<components::AppTab>, set_intruders: Setter<Vec<intruder::state::IntruderState>>, set_intruder_tab: Setter<usize>) -> PopupMenu {
   let url = format!("https://{}{}", req.1.host, req.1.uri);
   let history_idx = req.0;
   let set_highlights = req.3.clone();
@@ -255,7 +262,29 @@ fn history_context_menu(
         view! {
             <ShortcutItem name={"Send to Intruder".to_string()} shortcut={"Ctrl+I".to_string()} />
         }.into_any_element()
-    }).on_click(|_, _, _| println!("Intruder")))
+    }).on_click({
+        let req_row = req.1.clone();
+        let set_intruders = set_intruders.clone();
+        let set_app_tab = set_app_tab.clone();
+
+        let set_intruder_tab = set_intruder_tab.clone();
+        move |_, _, cx| {
+            let raw_req = format!("{} {} HTTP/1.1\r\nHost: {}\r\n\r\n", req_row.method, req_row.uri, req_row.host);
+            let mut new_idx = 0;
+            set_intruders.update(|list| {
+                list.push(intruder::state::IntruderState {
+                    req_id: list.len() + 1,
+                    target: req_row.host.clone(),
+                    raw_request: raw_req,
+                    update_host_header: true,
+                    rows: Vec::new(),
+                });
+                new_idx = list.len() - 1;
+            }, cx);
+            set_intruder_tab.set(new_idx, cx);
+            set_app_tab.set(components::AppTab::Intruder, cx);
+        }
+    }))
     .item(PopupMenuItem::element(|window, cx| {
         view! {
             <ShortcutItem name={"Send to Repeater".to_string()} shortcut={"Ctrl+R".to_string()} />
