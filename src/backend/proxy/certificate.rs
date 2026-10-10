@@ -6,11 +6,11 @@ use rcgen::{
 };
 use std::fs;
 use std::path::PathBuf;
-use super::super::storage::storage_path;
+use super::super::storage::dots_storage_path;
 
 // save the certificate on first launch
 fn ca_paths() -> Result<(PathBuf, PathBuf)> {
-    let keys_dir = storage_path()
+    let keys_dir = dots_storage_path()
         .ok_or_else(|| anyhow!("No path"))?
         .join("keys");
     fs::create_dir_all(&keys_dir)?;

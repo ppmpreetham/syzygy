@@ -1,6 +1,6 @@
 use std::fs::create_dir_all;
 
-use super::storage_path;
+use super::dots_storage_path;
 use super::Exchange;
 use super::serializer::serialize;
 use anyhow::{Result, anyhow};
@@ -14,7 +14,7 @@ pub struct Db {
 
 impl Db {
     pub fn new() -> Result<Self> {
-        let path = storage_path()
+        let path = dots_storage_path()
             .ok_or_else(|| anyhow!("failed to get path"))?
             .join("db");
 

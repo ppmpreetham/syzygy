@@ -7,7 +7,14 @@ use super::intercept::exchange::Exchange;
 
 use std::path::PathBuf;
 use directories::ProjectDirs;
-pub fn storage_path() -> Option<PathBuf> {
+fn project_dirs() -> Option<ProjectDirs> {
     ProjectDirs::from("com", "syzygy", "SyZyGy")
-        .map(|proj_dirs| proj_dirs.config_dir().to_path_buf())
+}
+
+pub fn dots_storage_path() -> Option<PathBuf> {
+    project_dirs().map(|dirs| dirs.config_dir().to_path_buf())
+}
+
+pub fn local_data_storage_path() -> Option<PathBuf> {
+    project_dirs().map(|dirs| dirs.data_local_dir().to_path_buf())
 }

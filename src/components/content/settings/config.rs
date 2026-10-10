@@ -1,4 +1,4 @@
-use super::theme::{Theme, ThemeMode};
+use super::theme::{ThemeMode};
 use serde::{Deserialize, Serialize};
 use std::{fs, path::Path};
 use std::fs::File;
@@ -7,14 +7,12 @@ use serde_json;
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
-    pub theme: Theme,
     pub theme_mode: ThemeMode,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            theme: Theme::Monokai,
             theme_mode: ThemeMode::System,
         }
     }
