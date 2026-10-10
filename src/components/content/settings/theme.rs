@@ -9,68 +9,61 @@ use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, str::from_utf8};
 use strum::{Display, EnumIter, IntoEnumIterator};
 
-use super::method::method;
-use crate::backend::storage::dots_storage_path;
+use crate::{backend::storage::dots_storage_path, components::content::settings::config, config::Config};
 
 // radio
-#[derive(Deserialize, Serialize, EnumIter, Display)]
+#[derive(Deserialize, Serialize, EnumIter, Display, Default, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeMode {
     Light,
     Dark,
+    #[default]
     System,
 }
 
-impl ThemeMode {
-    pub fn method() -> method {
-        method::Radio(Self::iter().map(|v| v.to_string()).collect())
-    }
-}
-
-// list
-pub fn theme_options(cx: &App) -> Vec<SharedString> {
-    ThemeRegistry::global(cx)
-        .sorted_themes()
-        .into_iter()
-        .map(|t| t.name.clone())
-        .collect()
-}
 
 #[derive(RustEmbed)]
 #[folder = "assets\\themes"]
 #[include = "*.json"]
 struct BundledThemes;
 
-pub fn theme_init(cx: &mut App) -> Result<()> {
-    let theme_name = SharedString::from("Ayu Dark");
+fn load_bundled_themes(cx: &mut App) {
     let registry = ThemeRegistry::global_mut(cx);
+
     for file in BundledThemes::iter() {
-        if let Some(embedded) = BundledThemes::get(&file)
-            && let Ok(content) = from_utf8(&embedded.data)
-            && let Err(e) = registry.load_themes_from_str(content)
-        {
-            error!("Failed to load bundled theme {file}: {e}");
+        let embedded = BundledThemes::get(&file);
+
+        if let Some(asset) = &embedded
+            && let Ok(content) = from_utf8(&asset.data)
+            &&let Err(e) = registry.load_themes_from_str(content) {
+                error!("Failed to load theme {file}: {e}");
         }
     }
+}
 
-    if let Some(theme) = ThemeRegistry::global(cx).themes().get(&theme_name).cloned() {
-        Theme::change(theme.mode, None, cx);
-        Theme::update(cx, |current| current.apply_config(&theme));
-    }
+fn apply_theme_by_name(name: &SharedString, cx: &mut App) {
+    let Some(theme) = ThemeRegistry::global(cx).themes().get(name).cloned() else {
+        return;
+    };
+    Theme::change(theme.mode, None, cx);
+    Theme::update(cx, |current| current.apply_config(&theme));
+}
+
+pub fn theme_init(cx: &mut App) -> Result<()> {
+    let theme_name = SharedString::from(cx.global::<config::Config>().theme_name.clone());
+
+    load_bundled_themes(cx);
+    apply_theme_by_name(&theme_name, cx);
 
     // user's custom overriding themes
     let path = dots_storage_path()
-        .ok_or_else(|| anyhow!("Can't find the storage path"))?
+        .ok_or_else(|| anyhow!("Can't find storage path"))?
         .join("themes/");
 
     if let Err(err) = ThemeRegistry::watch_dir(path, cx, move |cx| {
-        if let Some(theme) = ThemeRegistry::global(cx).themes().get(&theme_name).cloned() {
-            println!("Setting mode to: {:?}", theme.mode);
-            Theme::change(theme.mode, None, cx);
-            Theme::update(cx, |current| current.apply_config(&theme));
-        }
+        load_bundled_themes(cx);
+        apply_theme_by_name(&theme_name, cx);
     }) {
-        error!("Failed to watch themes directory: {err}");
+        error!("Failed to watch themes: {err}");
     }
-
     Ok(())
 }

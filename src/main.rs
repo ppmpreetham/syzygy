@@ -11,6 +11,7 @@ use crate::backend::{ProxyState, start_proxy};
 use app::app;
 use assets::AppAssets;
 use components::content::settings::theme::theme_init;
+use components::content::settings::config_init;
 use gpui_kit::component::theme::{Theme, ThemeMode};
 use gpui_kit::component::{Root, TitleBar};
 use gpui_kit::gpui::WindowBackgroundAppearance;
@@ -44,8 +45,9 @@ fn main() {
         });
 
         gpui_kit::init(cx);
-        // Theme::change(ThemeMode::Dark, None, cx);
+        config_init(cx).ok();
         theme_init(cx).ok();
+
         let window_options = WindowOptions {
             window_bounds: Some(config.window_size),
             window_background: WindowBackgroundAppearance::Opaque,
@@ -61,3 +63,5 @@ fn main() {
         cx.activate(true);
     });
 }
+
+

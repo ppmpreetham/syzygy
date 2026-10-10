@@ -1,22 +1,29 @@
-use super::theme::ThemeMode;
 use anyhow::{Context, Error, Result};
+use gpui_kit::App;
+use gpui_kit::component::Theme;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs::File;
 use std::{fs, path::Path};
+use gpui_kit::Global;
+use super::theme::ThemeMode;
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
     pub theme_mode: ThemeMode,
+    pub theme_name: String,
 }
+impl Global for Config {}
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             theme_mode: ThemeMode::System,
+            theme_name: "Ayu Dark".to_string(),
         }
     }
 }
+
 
 impl Config {
     /// load config
@@ -43,3 +50,5 @@ impl Config {
         Self::load(file_path).unwrap_or_else(|_| Self::create(file_path).unwrap_or_default())
     }
 }
+
+
