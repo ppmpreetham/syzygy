@@ -1,3 +1,4 @@
+use gpui_kit::{App, SharedString, component::ThemeRegistry};
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter, IntoEnumIterator};
 use super::method::method;
@@ -9,6 +10,7 @@ pub enum ThemeMode {
     Dark,
     System,
 }
+
 impl ThemeMode {
     pub fn method() -> method {
         method::Radio(Self::iter().map(|v| v.to_string()).collect())
@@ -25,3 +27,10 @@ pub enum Theme {
 }
 
 // list
+pub fn theme_options(cx: &App) -> Vec<SharedString> {
+    ThemeRegistry::global(cx)
+        .sorted_themes()
+        .into_iter()
+        .map(|t| t.name.clone())
+        .collect()
+}

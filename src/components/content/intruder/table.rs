@@ -11,7 +11,7 @@ use super::state::IntruderState;
 pub fn IntruderTable(rows: Vec<VariableRow>, set_rows: Setter<IntruderState>) {
     view! {
         <DataTable rows={rows}>
-            <Col id="var" title="Variable" r={|row| row.variable.clone()} />
+            <Col id="var" title="Variable" r={|row| view! { <div class="truncate">{ row.variable.clone() }</div> }} />
 
             <Col id="payload" title="Payload" r={|row: &VariableRow| {
                 render_payload_dropdown(row.variable.clone(), row.payload.clone(), set_rows.clone())
@@ -52,7 +52,7 @@ fn render_payload_dropdown(variable: SharedString, payload: SharedString, set_ro
 fn render_attack_dropdown(variable: SharedString, attack_type: AttackType, set_rows: Setter<IntruderState>) -> impl IntoElement {
     let target_var = variable.clone();
 
-    Button::new(format!("attack-{}", variable))
+    Button::new(format!("attack-{variable}"))
         .label(attack_type.to_string())
         .dropdown_menu(move |mut menu: PopupMenu, _, _| {
             for attack in AttackType::iter() {
@@ -73,3 +73,4 @@ fn render_attack_dropdown(variable: SharedString, attack_type: AttackType, set_r
             menu
         })
 }
+

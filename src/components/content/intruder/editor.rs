@@ -8,9 +8,10 @@ use super::VariableRow;
 use zopra::{component, view};
 use super::state::{IntruderState, add_section, remove_section};
 use super::algorithm::sectioner;
+use zopra::hooks::Setter;
 
 #[component]
-pub fn IntruderEditor(set_rows: zopra::hooks::Setter<IntruderState>) {
+pub fn IntruderEditor(set_rows: Setter<IntruderState>) {
     let editor = use_editor(window, cx);
     let sel = editor.read(cx).selected_range();
     let (start, end) = (sel.start, sel.end);
@@ -44,23 +45,23 @@ pub fn IntruderEditor(set_rows: zopra::hooks::Setter<IntruderState>) {
 
 
     let editor_clone = editor.clone();
-    use_event(&editor, move |event: &InputEvent, cx| {  
-        if matches!(event, InputEvent::Change) {  
-            let text = editor_clone.read(cx).value();  
-            if let Ok(sections) = sectioner(&text) {  
-                set_rows.update(|state| {  
-                    let mut new_rows = Vec::new();  
-                    for s in &sections {  
-                        if let Some(existing) = state.rows.iter().find(|r| r.variable == s.word) {  
-                            new_rows.push(existing.clone());  
-                        } else {  
-                            new_rows.push(VariableRow { variable: s.word.into(), ..Default::default() });  
-                        }  
-                    }  
-                    state.rows = new_rows;  
-                }, cx);  
-            }  
-        }  
+    use_event(&editor, move |event: &InputEvent, cx| {
+        if matches!(event, InputEvent::Change) {
+            let text = editor_clone.read(cx).value();
+            if let Ok(sections) = sectioner(&text) {
+                set_rows.update(|state| {
+                    let mut new_rows = Vec::new();
+                    for s in &sections {
+                        if let Some(existing) = state.rows.iter().find(|r| r.variable == s.word) {
+                            new_rows.push(existing.clone());
+                        } else {
+                            new_rows.push(VariableRow { variable: s.word.into(), ..Default::default() });
+                        }
+                    }
+                    state.rows = new_rows;
+                }, cx);
+            }
+        }
     });
 
     view! {
@@ -77,5 +78,3 @@ pub fn IntruderEditor(set_rows: zopra::hooks::Setter<IntruderState>) {
         </div>
     }
 }
-
-

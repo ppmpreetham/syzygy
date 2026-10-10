@@ -1,17 +1,36 @@
 ﻿use gpui_kit::{Entity, Window, App, base::input::EditorState};
+use wry::http::Request;
 use super::algorithm::{sectioner, SectionPosition, GRAPHEME_LEN};
 use super::VariableRow;
+use gpui_kit::SharedString;
 
-#[derive(Clone, PartialEq, Default)]
+#[derive(Clone, PartialEq)]
 pub struct IntruderState {
     pub req_id: usize,
+    pub target: SharedString,
+    pub raw_request: String,
+    pub update_host_header: bool,
     pub rows: Vec<VariableRow>,
+}
+impl Default for IntruderState {
+    fn default() -> Self {
+        Self {
+            req_id: 1,
+            target: "".into(),
+            raw_request: String::new(),
+            update_host_header: true,
+            rows: Vec::new(),
+        }
+    }
 }
 
 impl IntruderState {
-    pub fn new(req_id: usize) -> Self {
+    pub fn new(req_id: usize, target: SharedString, raw_request: String) -> Self {
         Self {
             req_id,
+            target,
+            raw_request,
+            update_host_header: true,
             rows: Vec::new(),
         }
     }
