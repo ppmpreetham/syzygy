@@ -5,8 +5,8 @@ mod utils;
 
 use super::intercept::exchange::Exchange;
 
-use std::path::PathBuf;
 use directories::ProjectDirs;
+use std::path::PathBuf;
 fn project_dirs() -> Option<ProjectDirs> {
     ProjectDirs::from("com", "syzygy", "SyZyGy")
 }

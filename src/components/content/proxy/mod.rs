@@ -1,9 +1,9 @@
+use crate::components::AppTab;
+use crate::components::content::intruder::state::IntruderState;
 use gpui_kit::*;
 use std::sync::Arc;
 use strum_macros::FromRepr;
-use zopra::{component, hooks::use_state, hooks::Setter, view};
-use crate::components::AppTab;
-use crate::components::content::intruder::state::IntruderState;
+use zopra::{component, hooks::Setter, hooks::use_state, view};
 
 pub mod http_history;
 pub mod intercept;
@@ -27,7 +27,12 @@ pub enum ProxyTab {
 }
 
 #[component]
-pub fn proxy(proxy_state: Arc<ProxyState>, set_app_tab: Setter<AppTab>, set_intruders: Setter<Vec<IntruderState>>, set_intruder_tab: Setter<usize>) {
+pub fn proxy(
+    proxy_state: Arc<ProxyState>,
+    set_app_tab: Setter<AppTab>,
+    set_intruders: Setter<Vec<IntruderState>>,
+    set_intruder_tab: Setter<usize>,
+) {
     let (active_tab, set_active_tab) = use_state(ProxyTab::Intercept);
 
     view! {

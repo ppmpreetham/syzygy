@@ -1,16 +1,23 @@
-use super::{VariableRow, DUMMY_PAYLOADS};
-use gpui_kit::component::menu::{DropdownMenu, PopupMenu, PopupMenuItem};
-use gpui_kit::component::button::Button;
-use gpui_kit::*;
-use zopra::{component, hooks::Setter, view};
-use super::types::AttackType;
-use strum::IntoEnumIterator;
 use super::state::IntruderState;
+use super::types::AttackType;
+use super::{DUMMY_PAYLOADS, VariableRow};
+use gpui_kit::component::button::Button;
+use gpui_kit::component::menu::{DropdownMenu, PopupMenu, PopupMenuItem};
+use gpui_kit::*;
+use strum::IntoEnumIterator;
 use zopra::hooks::Snap;
+use zopra::{component, hooks::Setter, view};
 
 #[component]
-pub fn IntruderTable(intruders: Snap<Vec<IntruderState>>, set_intruders: Setter<Vec<IntruderState>>, active_idx: usize) {
-    let rows = intruders.get(active_idx).map(|r| r.rows.clone()).unwrap_or_default();
+pub fn IntruderTable(
+    intruders: Snap<Vec<IntruderState>>,
+    set_intruders: Setter<Vec<IntruderState>>,
+    active_idx: usize,
+) {
+    let rows = intruders
+        .get(active_idx)
+        .map(|r| r.rows.clone())
+        .unwrap_or_default();
     view! {
         <DataTable rows={rows}>
             <Col id="var" title="Variable" r={|row| view! { <div class="truncate">{ row.variable.clone() }</div> }} />
@@ -26,7 +33,12 @@ pub fn IntruderTable(intruders: Snap<Vec<IntruderState>>, set_intruders: Setter<
     }
 }
 
-fn render_payload_dropdown(variable: SharedString, payload: SharedString, set_intruders: Setter<Vec<IntruderState>>, active_idx: usize) -> impl IntoElement {
+fn render_payload_dropdown(
+    variable: SharedString,
+    payload: SharedString,
+    set_intruders: Setter<Vec<IntruderState>>,
+    active_idx: usize,
+) -> impl IntoElement {
     let target_var = variable.clone();
 
     Button::new(format!("payload-{variable}"))
@@ -36,23 +48,32 @@ fn render_payload_dropdown(variable: SharedString, payload: SharedString, set_in
                 let payload_str = p.to_string();
                 let set_intruders = set_intruders.clone();
                 let target_var = target_var.clone();
-                menu = menu.item(
-                    PopupMenuItem::new(payload_str.clone())
-                        .on_click(move |_, _, cx| {
-                            set_intruders.update(|list| {
+                menu = menu.item(PopupMenuItem::new(payload_str.clone()).on_click(
+                    move |_, _, cx| {
+                        set_intruders.update(
+                            |list| {
                                 if let Some(state) = list.get_mut(active_idx)
-                                    && let Some(r) = state.rows.iter_mut().find(|r| r.variable == target_var) {
-                                        r.payload = payload_str.clone().into();
-                                    }
-                            }, cx);
-                        })
-                );
+                                    && let Some(r) =
+                                        state.rows.iter_mut().find(|r| r.variable == target_var)
+                                {
+                                    r.payload = payload_str.clone().into();
+                                }
+                            },
+                            cx,
+                        );
+                    },
+                ));
             }
             menu
         })
 }
 
-fn render_attack_dropdown(variable: SharedString, attack_type: AttackType, set_intruders: Setter<Vec<IntruderState>>, active_idx: usize) -> impl IntoElement {
+fn render_attack_dropdown(
+    variable: SharedString,
+    attack_type: AttackType,
+    set_intruders: Setter<Vec<IntruderState>>,
+    active_idx: usize,
+) -> impl IntoElement {
     let target_var = variable.clone();
 
     Button::new(format!("attack-{variable}"))
@@ -62,17 +83,21 @@ fn render_attack_dropdown(variable: SharedString, attack_type: AttackType, set_i
                 let attack_clone = attack.clone();
                 let set_intruders = set_intruders.clone();
                 let target_var = target_var.clone();
-                menu = menu.item(
-                    PopupMenuItem::new(attack.to_string())
-                        .on_click(move |_, _, cx| {
-                            set_intruders.update(|list| {
+                menu = menu.item(PopupMenuItem::new(attack.to_string()).on_click(
+                    move |_, _, cx| {
+                        set_intruders.update(
+                            |list| {
                                 if let Some(state) = list.get_mut(active_idx)
-                                    && let Some(r) = state.rows.iter_mut().find(|r| r.variable == target_var) {
-                                        r.attack_type = attack_clone.clone();
-                                    }
-                            }, cx);
-                        })
-                );
+                                    && let Some(r) =
+                                        state.rows.iter_mut().find(|r| r.variable == target_var)
+                                {
+                                    r.attack_type = attack_clone.clone();
+                                }
+                            },
+                            cx,
+                        );
+                    },
+                ));
             }
             menu
         })

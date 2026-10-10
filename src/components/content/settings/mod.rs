@@ -1,13 +1,13 @@
-use std::path::Path;
 use anyhow::Result;
 use directories;
+use std::path::Path;
 mod config;
 mod method;
 pub mod theme;
-use std::fs::create_dir_all;
-use anyhow::anyhow;
 use crate::backend::storage::dots_storage_path;
+use anyhow::anyhow;
 use config::Config;
+use std::fs::create_dir_all;
 
 pub fn init() -> Result<Config> {
     let config_path = dots_storage_path()

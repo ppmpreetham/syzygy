@@ -1,13 +1,16 @@
-use gpui_kit::{App, SharedString, component::{ActiveTheme, Theme, ThemeRegistry}};
-use serde::{Deserialize, Serialize};
-use strum::{Display, EnumIter, IntoEnumIterator};
-use std::{path::PathBuf, str::from_utf8};
-use log::error;
 use anyhow::{Result, anyhow};
+use gpui_kit::{
+    App, SharedString,
+    component::{ActiveTheme, Theme, ThemeRegistry},
+};
+use log::error;
 use rust_embed::RustEmbed;
+use serde::{Deserialize, Serialize};
+use std::{path::PathBuf, str::from_utf8};
+use strum::{Display, EnumIter, IntoEnumIterator};
 
-use crate::backend::storage::dots_storage_path;
 use super::method::method;
+use crate::backend::storage::dots_storage_path;
 
 // radio
 #[derive(Deserialize, Serialize, EnumIter, Display)]
@@ -32,8 +35,6 @@ pub fn theme_options(cx: &App) -> Vec<SharedString> {
         .collect()
 }
 
-
-
 #[derive(RustEmbed)]
 #[folder = "assets\\themes"]
 #[include = "*.json"]
@@ -44,9 +45,11 @@ pub fn theme_init(cx: &mut App) -> Result<()> {
     let registry = ThemeRegistry::global_mut(cx);
     for file in BundledThemes::iter() {
         if let Some(embedded) = BundledThemes::get(&file)
-            && let Ok(content) = from_utf8(&embedded.data) && let Err(e) = registry.load_themes_from_str(content) {
-                    error!("Failed to load bundled theme {file}: {e}");
-                }
+            && let Ok(content) = from_utf8(&embedded.data)
+            && let Err(e) = registry.load_themes_from_str(content)
+        {
+            error!("Failed to load bundled theme {file}: {e}");
+        }
     }
 
     if let Some(theme) = ThemeRegistry::global(cx).themes().get(&theme_name).cloned() {
@@ -60,11 +63,7 @@ pub fn theme_init(cx: &mut App) -> Result<()> {
         .join("themes/");
 
     if let Err(err) = ThemeRegistry::watch_dir(path, cx, move |cx| {
-        if let Some(theme) = ThemeRegistry::global(cx)
-            .themes()
-            .get(&theme_name)
-            .cloned()
-        {
+        if let Some(theme) = ThemeRegistry::global(cx).themes().get(&theme_name).cloned() {
             println!("Setting mode to: {:?}", theme.mode);
             Theme::change(theme.mode, None, cx);
             Theme::update(cx, |current| current.apply_config(&theme));
@@ -75,5 +74,3 @@ pub fn theme_init(cx: &mut App) -> Result<()> {
 
     Ok(())
 }
-
-

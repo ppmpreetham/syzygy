@@ -1,13 +1,13 @@
 use gpui_kit::component::input::EditorState;
 use gpui_kit::prelude::*;
 use gpui_kit::*;
+use zopra::components::Editor;
+use zopra::hooks::use_editor;
 use zopra::{
     component,
     hooks::{Setter, use_state},
     view,
 };
-use zopra::hooks::use_editor;
-use zopra::components::Editor;
 
 #[component]
 pub fn RequestInfo(content: SharedString, set_editor_entity: Setter<Option<Entity<EditorState>>>) {
@@ -38,12 +38,12 @@ pub fn RequestInfo(content: SharedString, set_editor_entity: Setter<Option<Entit
                 "Request Info"
             </div>
             <div class="flex-1 size-full relative">
-                <Editor 
-                    state={&editor} 
-                    language="http" 
-                    line_numbers={true} 
-                    folding={true} 
-                    readonly={true} 
+                <Editor
+                    state={&editor}
+                    language="http"
+                    line_numbers={true}
+                    folding={true}
+                    readonly={true}
                 />
             </div>
         </div>

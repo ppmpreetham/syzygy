@@ -3,18 +3,18 @@ use crate::backend::intercept::state::ProxyEvent;
 use crate::backend::uimeta::RequestRow;
 use crate::components;
 use crate::components::content::intruder;
+use crate::globals::FULL_ROW_RAM;
 use gpui_kit::component::menu::{PopupMenu, PopupMenuItem};
+use gpui_kit::component::table::TableState;
 use gpui_kit::gpui::SharedString;
 use gpui_kit::*;
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::ops::Range;
 use std::sync::Arc;
+use zopra::components::declarative_table::DeclarativeTableDelegate;
 use zopra::hooks::Setter;
 use zopra::{component, hooks::use_state, view};
-use std::ops::Range;
-use zopra::components::declarative_table::DeclarativeTableDelegate;
-use gpui_kit::component::table::TableState;
-use crate::globals::FULL_ROW_RAM;
 
 type HistoryRow = (
     usize,
@@ -93,7 +93,12 @@ pub fn shortcut_item(name: String, shortcut: String) {
 
 #[allow(clippy::too_many_lines)]
 #[component]
-pub fn http_history(proxy_state: Arc<ProxyState>, set_app_tab: Setter<components::AppTab>, set_intruders: Setter<Vec<intruder::state::IntruderState>>, set_intruder_tab: Setter<usize>) {
+pub fn http_history(
+    proxy_state: Arc<ProxyState>,
+    set_app_tab: Setter<components::AppTab>,
+    set_intruders: Setter<Vec<intruder::state::IntruderState>>,
+    set_intruder_tab: Setter<usize>,
+) {
     let (get_highlights, set_highlights) = use_state(HashMap::<usize, (u32, u32)>::new());
     let (get_visible, set_visible) = use_state(0..1000usize);
     let (get_total, set_total) = use_state(0usize);
@@ -187,15 +192,19 @@ fn history_context_menu(
     _row_ix: usize,
     menu: PopupMenu,
     window: &mut Window,
-    cx: &mut Context<TableState<DeclarativeTableDelegate<HistoryRow>>>, set_app_tab: Setter<components::AppTab>, set_intruders: Setter<Vec<intruder::state::IntruderState>>, set_intruder_tab: Setter<usize>) -> PopupMenu {
-  let url = format!("https://{}{}", req.1.host, req.1.uri);
-  let history_idx = req.0;
-  let set_highlights = req.3.clone();
-  let highlight_menu = PopupMenu::build(window, cx, move |mut menu, _, _| {
-    for (name, background, foreground) in COLORS {
-        let color_name = name.to_string();
-        let set_highlights = set_highlights.clone();
-        menu = menu.item(
+    cx: &mut Context<TableState<DeclarativeTableDelegate<HistoryRow>>>,
+    set_app_tab: Setter<components::AppTab>,
+    set_intruders: Setter<Vec<intruder::state::IntruderState>>,
+    set_intruder_tab: Setter<usize>,
+) -> PopupMenu {
+    let url = format!("https://{}{}", req.1.host, req.1.uri);
+    let history_idx = req.0;
+    let set_highlights = req.3.clone();
+    let highlight_menu = PopupMenu::build(window, cx, move |mut menu, _, _| {
+        for (name, background, foreground) in COLORS {
+            let color_name = name.to_string();
+            let set_highlights = set_highlights.clone();
+            menu = menu.item(
             PopupMenuItem::element(move |_, _| {
                 view! {
                     <div
@@ -217,27 +226,30 @@ fn history_context_menu(
                 );
             }),
         );
-    }
-    let set_highlights = set_highlights.clone();
-    menu.item(PopupMenuItem::separator()).item(
-        PopupMenuItem::new("Clear highlight").on_click(move |_, _, cx| {
-            set_highlights.update(|highlights| {
-                highlights.remove(&history_idx);
-            }, cx);
-        }),
-    )
-  });
-  let dont_intercept_menu = PopupMenu::build(window, cx, |m, _, _| {
-    m.item(PopupMenuItem::new("To this host"))
-  });
-  let do_intercept_menu = PopupMenu::build(window, cx, |m, _, _| {
-    m.item(PopupMenuItem::new("Responses to this request"))
-  });
-  let browser_menu = PopupMenu::build(window, cx, |m, _, _| {
-    m.item(PopupMenuItem::new("In original session"))
-  });
-  menu
-    .item(PopupMenuItem::element(move |_, _| {
+        }
+        let set_highlights = set_highlights.clone();
+        menu.item(PopupMenuItem::separator())
+            .item(
+                PopupMenuItem::new("Clear highlight").on_click(move |_, _, cx| {
+                    set_highlights.update(
+                        |highlights| {
+                            highlights.remove(&history_idx);
+                        },
+                        cx,
+                    );
+                }),
+            )
+    });
+    let dont_intercept_menu = PopupMenu::build(window, cx, |m, _, _| {
+        m.item(PopupMenuItem::new("To this host"))
+    });
+    let do_intercept_menu = PopupMenu::build(window, cx, |m, _, _| {
+        m.item(PopupMenuItem::new("Responses to this request"))
+    });
+    let browser_menu = PopupMenu::build(window, cx, |m, _, _| {
+        m.item(PopupMenuItem::new("In original session"))
+    });
+    menu.item(PopupMenuItem::element(move |_, _| {
         view! {
             <div class="flex flex-row w-full items-center px-2 py-1 font-bold">
                 { url.clone() }
@@ -253,49 +265,67 @@ fn history_context_menu(
     .item(PopupMenuItem::new("Add notes"))
     .item(PopupMenuItem::submenu("Highlight", highlight_menu))
     .item(PopupMenuItem::separator())
-    .item(PopupMenuItem::submenu("Don't intercept requests", dont_intercept_menu))
+    .item(PopupMenuItem::submenu(
+        "Don't intercept requests",
+        dont_intercept_menu,
+    ))
     .item(PopupMenuItem::submenu("Do intercept", do_intercept_menu))
     .item(PopupMenuItem::separator())
     .item(PopupMenuItem::new("Scan").disabled(true))
     .item(PopupMenuItem::separator())
-    .item(PopupMenuItem::element(|window, cx| {
-        view! {
+    .item(
+        PopupMenuItem::element(|window, cx| {
+            view! {
             <ShortcutItem name={"Send to Intruder".to_string()} shortcut={"Ctrl+I".to_string()} />
         }.into_any_element()
-    }).on_click({
-        let req_row = req.1.clone();
-        let set_intruders = set_intruders.clone();
-        let set_app_tab = set_app_tab.clone();
+        })
+        .on_click({
+            let req_row = req.1.clone();
+            let set_intruders = set_intruders.clone();
+            let set_app_tab = set_app_tab.clone();
 
-        let set_intruder_tab = set_intruder_tab.clone();
-        move |_, _, cx| {
-            let raw_req = format!("{} {} HTTP/1.1\r\nHost: {}\r\n\r\n", req_row.method, req_row.uri, req_row.host);
-            let mut new_idx = 0;
-            set_intruders.update(|list| {
-                list.push(intruder::state::IntruderState {
-                    req_id: list.len() + 1,
-                    target: req_row.host.clone(),
-                    raw_request: raw_req,
-                    update_host_header: true,
-                    rows: Vec::new(),
-                });
-                new_idx = list.len() - 1;
-            }, cx);
-            set_intruder_tab.set(new_idx, cx);
-            set_app_tab.set(components::AppTab::Intruder, cx);
-        }
-    }))
-    .item(PopupMenuItem::element(|window, cx| {
-        view! {
+            let set_intruder_tab = set_intruder_tab.clone();
+            move |_, _, cx| {
+                let raw_req = format!(
+                    "{} {} HTTP/1.1\r\nHost: {}\r\n\r\n",
+                    req_row.method, req_row.uri, req_row.host
+                );
+                let mut new_idx = 0;
+                set_intruders.update(
+                    |list| {
+                        list.push(intruder::state::IntruderState {
+                            req_id: list.len() + 1,
+                            target: req_row.host.clone(),
+                            raw_request: raw_req,
+                            update_host_header: true,
+                            rows: Vec::new(),
+                        });
+                        new_idx = list.len() - 1;
+                    },
+                    cx,
+                );
+                set_intruder_tab.set(new_idx, cx);
+                set_app_tab.set(components::AppTab::Intruder, cx);
+            }
+        }),
+    )
+    .item(
+        PopupMenuItem::element(|window, cx| {
+            view! {
             <ShortcutItem name={"Send to Repeater".to_string()} shortcut={"Ctrl+R".to_string()} />
         }.into_any_element()
-    }).on_click(|_, _, _| println!("Repeater")))
+        })
+        .on_click(|_, _, _| println!("Repeater")),
+    )
     .item(PopupMenuItem::new("Send to Sequencer"))
-    .item(PopupMenuItem::element(|window, cx| {
-        view! {
+    .item(
+        PopupMenuItem::element(|window, cx| {
+            view! {
             <ShortcutItem name={"Send to Organizer".to_string()} shortcut={"Ctrl+O".to_string()} />
         }.into_any_element()
-    }).on_click(|_, _, _| println!("Organizer")))
+        })
+        .on_click(|_, _, _| println!("Organizer")),
+    )
     .item(PopupMenuItem::new("Send to Comparer"))
     .item(PopupMenuItem::submenu("Request in browser", browser_menu))
 }

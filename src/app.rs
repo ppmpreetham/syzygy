@@ -6,9 +6,9 @@ use crate::{backend::ProxyState, components::AppTab};
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::*;
 
+use crate::components::content::intruder::state::IntruderState;
 use std::sync::Arc;
 use zopra::{component, hooks::use_state, view};
-use crate::components::content::intruder::state::IntruderState;
 
 #[component]
 pub fn app(proxy_state: &Arc<ProxyState>) {

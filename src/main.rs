@@ -10,6 +10,7 @@ pub mod globals;
 use crate::backend::{ProxyState, start_proxy};
 use app::app;
 use assets::AppAssets;
+use components::content::settings::theme::theme_init;
 use gpui_kit::component::theme::{Theme, ThemeMode};
 use gpui_kit::component::{Root, TitleBar};
 use gpui_kit::gpui::WindowBackgroundAppearance;
@@ -17,7 +18,6 @@ use gpui_kit::*;
 use std::sync::Arc;
 use std::{future, thread};
 use tokio::runtime;
-use components::content::settings::theme::theme_init;
 
 pub struct Main {
     proxy_state: Arc<ProxyState>,
@@ -61,6 +61,3 @@ fn main() {
         cx.activate(true);
     });
 }
-
-
-

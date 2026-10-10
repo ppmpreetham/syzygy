@@ -1,3 +1,4 @@
+use super::super::storage::dots_storage_path;
 use anyhow::{Result, anyhow};
 use directories::ProjectDirs;
 use rcgen::{
@@ -6,7 +7,6 @@ use rcgen::{
 };
 use std::fs;
 use std::path::PathBuf;
-use super::super::storage::dots_storage_path;
 
 // save the certificate on first launch
 fn ca_paths() -> Result<(PathBuf, PathBuf)> {

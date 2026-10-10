@@ -2,8 +2,8 @@ use gpui_kit::base::input;
 use gpui_kit::component::Icon;
 use gpui_kit::*;
 use zopra::components::webview::WebView;
+use zopra::hooks::{use_event, use_input};
 use zopra::{WebViewController, component};
-use zopra::hooks::{use_input, use_event};
 
 use crate::backend::proxy_config;
 
@@ -27,21 +27,25 @@ fn browser_root(webview_ctrl: WebViewController) {
     let input_state = use_input(window, cx);
 
     // Handle Enter key for navigation
-    use_event(&input_state, {
-        let ctrl = ctrl.clone();
-        let input_state = input_state.clone();
-        move |event, cx| {
-            if let input::InputEvent::PressEnter { .. } = event {
-                let text = input_state.read(cx).text().to_string();
-                let url = if !text.starts_with("http") && !text.starts_with("file://") {
-                    format!("https://{text}")
-                } else {
-                    text
-                };
-                ctrl.load_url(&url, cx);
+    use_event(
+        &input_state,
+        {
+            let ctrl = ctrl.clone();
+            let input_state = input_state.clone();
+            move |event, cx| {
+                if let input::InputEvent::PressEnter { .. } = event {
+                    let text = input_state.read(cx).text().to_string();
+                    let url = if !text.starts_with("http") && !text.starts_with("file://") {
+                        format!("https://{text}")
+                    } else {
+                        text
+                    };
+                    ctrl.load_url(&url, cx);
+                }
             }
-        }
-    }, cx);
+        },
+        cx,
+    );
 
     zopra::view! {
         <div class="flex flex-col size-full p-2 gap-2 ">
@@ -112,4 +116,3 @@ pub(super) fn open_browser(window: &mut Window, cx: &mut App) {
     })
     .expect("failed to open browser window");
 }
-

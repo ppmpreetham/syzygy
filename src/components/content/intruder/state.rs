@@ -1,8 +1,8 @@
-﻿use gpui_kit::{Entity, Window, App, base::input::EditorState};
-use wry::http::Request;
-use super::algorithm::{sectioner, SectionPosition, GRAPHEME_LEN};
 use super::VariableRow;
+use super::algorithm::{GRAPHEME_LEN, SectionPosition, sectioner};
 use gpui_kit::SharedString;
+use gpui_kit::{App, Entity, Window, base::input::EditorState};
+use wry::http::Request;
 
 #[derive(Clone, PartialEq)]
 pub struct IntruderState {
@@ -38,13 +38,16 @@ impl IntruderState {
 
     pub fn add_variable(&mut self, word: &str) {
         if !word.is_empty() {
-          let row = VariableRow {variable: word.into(), ..Default::default()};
-          self.rows.push(row);
+            let row = VariableRow {
+                variable: word.into(),
+                ..Default::default()
+            };
+            self.rows.push(row);
         }
     }
 
     pub fn remove_variable(&mut self, word: &str) {
-      self.rows.retain(|row| row.variable != word);
+        self.rows.retain(|row| row.variable != word);
     }
 
     pub fn auto_variables(&mut self) {
@@ -52,11 +55,7 @@ impl IntruderState {
     }
 }
 
-pub fn add_section(
-    editor: &Entity<EditorState>,
-    window: &mut Window,
-    cx: &mut App,
-) {
+pub fn add_section(editor: &Entity<EditorState>, window: &mut Window, cx: &mut App) {
     editor.update(cx, |state, cx| {
         let sel = state.selected_range();
         if sel.start == sel.end {
@@ -68,11 +67,7 @@ pub fn add_section(
     });
 }
 
-pub fn remove_section(
-    editor: &Entity<EditorState>,
-    window: &mut Window,
-    cx: &mut App,
-) {
+pub fn remove_section(editor: &Entity<EditorState>, window: &mut Window, cx: &mut App) {
     editor.update(cx, |state, cx| {
         let text = state.value();
         let sel = state.selected_range();

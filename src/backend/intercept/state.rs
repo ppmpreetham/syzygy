@@ -2,6 +2,7 @@ use super::FLUSH_EVERY;
 use super::exchange::{Decision, Exchange, Status};
 use crate::backend::RequestRow;
 use crate::backend::storage::disk::Db;
+use crate::globals::{CLEAR_HTTP_HISTORY_WHEN_NO_BROWSER, PERSIST_HTTP_HISTORY_DATA};
 use gpui_kit::gpui::SharedString;
 use gpui_kit::http_client::{Request, Response};
 use http_body_util::Full;
@@ -16,7 +17,6 @@ use std::sync::Mutex as StdMutex;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::time::SystemTime;
 use tokio::sync::{broadcast, oneshot::Sender};
-use crate::globals::{PERSIST_HTTP_HISTORY_DATA, CLEAR_HTTP_HISTORY_WHEN_NO_BROWSER};
 
 #[derive(Clone)]
 pub enum ProxyEvent {
@@ -98,31 +98,27 @@ impl ProxyState {
     }
 
     pub fn pending_request_text(&self, id: usize) -> Option<String> {
-        self.pending
-            .lock()
-            .unwrap()
-            .get(&id)
-            .map(|(request, ..)| {
-                let headers = request
-                    .headers()
-                    .iter()
-                    .filter_map(|(name, value)| {
-                        value
-                            .to_str()
-                            .ok()
-                            .map(|value| format!("{name}: {value}\r\n"))
-                    })
-                    .collect::<String>();
-                let body = request.body().clone().into_inner().unwrap_or_default();
-                format!(
-                    "{} {} {:?}\r\n{}\r\n{}",
-                    request.method(),
-                    request.uri(),
-                    request.version(),
-                    headers,
-                    String::from_utf8_lossy(&body)
-                )
-            })
+        self.pending.lock().unwrap().get(&id).map(|(request, ..)| {
+            let headers = request
+                .headers()
+                .iter()
+                .filter_map(|(name, value)| {
+                    value
+                        .to_str()
+                        .ok()
+                        .map(|value| format!("{name}: {value}\r\n"))
+                })
+                .collect::<String>();
+            let body = request.body().clone().into_inner().unwrap_or_default();
+            format!(
+                "{} {} {:?}\r\n{}\r\n{}",
+                request.method(),
+                request.uri(),
+                request.version(),
+                headers,
+                String::from_utf8_lossy(&body)
+            )
+        })
     }
 
     pub fn history_count(&self) -> usize {
@@ -224,7 +220,9 @@ impl ProxyState {
             row.mime = mime;
         }
 
-        self.event_tx.send(ProxyEvent::History(index, Status::Done)).ok();
+        self.event_tx
+            .send(ProxyEvent::History(index, Status::Done))
+            .ok();
         self.maybe_flush();
     }
 
@@ -246,7 +244,8 @@ impl ProxyState {
                 eprintln!("history flush failed: {e}");
                 return;
             }
-            self.flush_cursor.store(cursor + items.len(), Ordering::Relaxed);
+            self.flush_cursor
+                .store(cursor + items.len(), Ordering::Relaxed);
         }
     }
 
@@ -260,7 +259,9 @@ impl ProxyState {
             if !PERSIST_HTTP_HISTORY_DATA && let Some(db) = &self.disk {
                 db.clear_history().ok();
             }
-            self.event_tx.send(ProxyEvent::History(0, Status::Dropped)).ok();
+            self.event_tx
+                .send(ProxyEvent::History(0, Status::Dropped))
+                .ok();
         }
     }
 }

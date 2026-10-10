@@ -1,7 +1,7 @@
 use std::fs::create_dir_all;
 
-use super::dots_storage_path;
 use super::Exchange;
+use super::dots_storage_path;
 use super::serializer::serialize;
 use anyhow::{Result, anyhow};
 use fjall::{Database, Keyspace, KeyspaceCreateOptions, PersistMode};

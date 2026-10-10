@@ -49,7 +49,8 @@ pub async fn catcher(
             pending.insert(id, (req.clone(), row.clone(), tx));
             state
                 .event_tx
-                .send(ProxyEvent::Intercepted(id, row.clone())).ok();
+                .send(ProxyEvent::Intercepted(id, row.clone()))
+                .ok();
             Some(rx)
         } else {
             None

@@ -1,17 +1,21 @@
 mod algorithm;
 mod editor;
+pub mod state;
 mod table;
 mod types;
-pub mod state;
 
 use editor::IntruderEditor;
 use gpui_kit::base::input;
 use gpui_kit::*;
+use state::IntruderState;
 use table::IntruderTable;
 use types::AttackType;
-use zopra::{component, hooks::{use_event, use_input, use_state}, view};
-use state::IntruderState;
-use zopra::hooks::{Snap, Setter};
+use zopra::hooks::{Setter, Snap};
+use zopra::{
+    component,
+    hooks::{use_event, use_input, use_state},
+    view,
+};
 
 #[derive(Clone, PartialEq, Default)]
 pub struct VariableRow {
@@ -23,19 +27,28 @@ pub struct VariableRow {
 pub const DUMMY_PAYLOADS: &[&str] = &["Payload 1", "Payload 2", "Payload 3"];
 
 #[component]
-pub fn intruder(intruders: Snap<Vec<IntruderState>>, set_intruders: Setter<Vec<IntruderState>>, intruder_tab: Snap<usize>, set_intruder_tab: Setter<usize>) {
+pub fn intruder(
+    intruders: Snap<Vec<IntruderState>>,
+    set_intruders: Setter<Vec<IntruderState>>,
+    intruder_tab: Snap<usize>,
+    set_intruder_tab: Setter<usize>,
+) {
     let input_state = use_input(window, cx);
 
-
-
-    let active_idx = if *intruder_tab >= intruders.len() { intruders.len().saturating_sub(1) } else { *intruder_tab };
+    let active_idx = if *intruder_tab >= intruders.len() {
+        intruders.len().saturating_sub(1)
+    } else {
+        *intruder_tab
+    };
     let active_req = intruders.get(active_idx).cloned().unwrap_or_default();
 
     let (local_idx, set_local_idx) = use_state(usize::MAX);
     if *local_idx != active_idx {
         set_local_idx.set(active_idx, cx);
         let target = active_req.target.clone();
-        input_state.update(cx, |inp, cx| { inp.replace_all(target.as_str(), window, cx); });
+        input_state.update(cx, |inp, cx| {
+            inp.replace_all(target.as_str(), window, cx);
+        });
     }
 
     let input_evt = input_state.clone();
@@ -43,11 +56,14 @@ pub fn intruder(intruders: Snap<Vec<IntruderState>>, set_intruders: Setter<Vec<I
     use_event(&input_state, move |event: &input::InputEvent, cx| {
         if matches!(event, input::InputEvent::Change) {
             let text = input_evt.read(cx).value();
-            set_intruders_evt.update(|list| {
-                if let Some(req) = list.get_mut(active_idx) {
-                    req.target = text;
-                }
-            }, cx);
+            set_intruders_evt.update(
+                |list| {
+                    if let Some(req) = list.get_mut(active_idx) {
+                        req.target = text;
+                    }
+                },
+                cx,
+            );
         }
     });
 
