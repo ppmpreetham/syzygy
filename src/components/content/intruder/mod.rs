@@ -10,7 +10,7 @@ use table::IntruderTable;
 use types::AttackType;
 use zopra::{component, hooks::use_input, hooks::use_state, view};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Default)]
 pub struct VariableRow {
     pub id: usize,
     pub variable: SharedString,
