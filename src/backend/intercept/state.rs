@@ -188,7 +188,7 @@ impl ProxyState {
                 history[index].row.status = Some(StatusCode::BAD_GATEWAY);
             }
         }
-        _ = self.event_tx.send(ProxyEvent::History(index, status));
+        self.event_tx.send(ProxyEvent::History(index, status)).ok();
         self.maybe_flush();
     }
 

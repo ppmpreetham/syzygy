@@ -47,9 +47,9 @@ pub async fn catcher(
         if state.intercepted.load(Ordering::Acquire) {
             let (tx, rx) = oneshot::channel();
             pending.insert(id, (req.clone(), row.clone(), tx));
-            _ = state
+            state
                 .event_tx
-                .send(ProxyEvent::Intercepted(id, row.clone()));
+                .send(ProxyEvent::Intercepted(id, row.clone())).ok();
             Some(rx)
         } else {
             None
