@@ -8,8 +8,9 @@ use rust_embed::RustEmbed;
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, str::from_utf8};
 use strum::{Display, EnumIter, IntoEnumIterator};
+use gpui_kit::gpui::WindowBackgroundAppearance;
 
-use crate::{backend::storage::dots_storage_path, components::content::settings::config, config::Config};
+use crate::backend::storage::dots_storage_path;
 
 // radio
 #[derive(Deserialize, Serialize, EnumIter, Display, Default, Clone, Copy, PartialEq, Eq)]
@@ -18,6 +19,32 @@ pub enum ThemeMode {
     Dark,
     #[default]
     System,
+}
+
+#[derive(Deserialize, Serialize, EnumIter, Display, Default, Clone, Copy, PartialEq, Eq)]
+pub enum WindowStyle {
+    #[default]
+    Opaque,
+    Transparent,
+    Blurred,
+    #[cfg(target_os = "windows")]
+    MicaBackdrop,
+    #[cfg(target_os = "windows")]
+    MicaAltBackdrop,
+}
+
+impl Into<WindowBackgroundAppearance> for WindowStyle {
+    fn into(self) -> WindowBackgroundAppearance {
+        match self {
+            Self::Opaque => WindowBackgroundAppearance::Opaque,
+            Self::Transparent => WindowBackgroundAppearance::Transparent,
+            Self::Blurred => WindowBackgroundAppearance::Blurred,
+            #[cfg(target_os = "windows")]
+            Self::MicaBackdrop => WindowBackgroundAppearance::MicaBackdrop,
+            #[cfg(target_os = "windows")]
+            Self::MicaAltBackdrop => WindowBackgroundAppearance::MicaAltBackdrop,
+        }
+    }
 }
 
 
@@ -49,7 +76,7 @@ fn apply_theme_by_name(name: &SharedString, cx: &mut App) {
 }
 
 pub fn theme_init(cx: &mut App) -> Result<()> {
-    let theme_name = SharedString::from(cx.global::<config::Config>().theme_name.clone());
+    let theme_name = SharedString::from(cx.global::<crate::components::content::settings::config::Config>().theme_name.clone());
 
     load_bundled_themes(cx);
     apply_theme_by_name(&theme_name, cx);
@@ -67,3 +94,5 @@ pub fn theme_init(cx: &mut App) -> Result<()> {
     }
     Ok(())
 }
+
+

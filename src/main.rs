@@ -4,10 +4,10 @@ mod app;
 mod assets;
 mod backend;
 pub mod components;
-mod config;
 pub mod globals;
 
 use crate::backend::{ProxyState, start_proxy};
+use crate::components::content::settings::config;
 use app::app;
 use assets::AppAssets;
 use components::content::settings::theme::theme_init;
@@ -31,7 +31,6 @@ impl Render for Main {
 
 fn main() {
     let app = gpui_kit::application().with_assets(AppAssets);
-    let config = config::Config::new();
     let proxy_state = ProxyState::new();
 
     app.run(move |cx| {
@@ -49,8 +48,8 @@ fn main() {
         theme_init(cx).ok();
 
         let window_options = WindowOptions {
-            window_bounds: Some(config.window_size),
-            window_background: WindowBackgroundAppearance::Opaque,
+            window_bounds: Some(WindowBounds::Maximized(Bounds { origin: point(px(0.0), px(0.0)), size: size(px(1920.0), px(1080.0)) })),
+            window_background: cx.global::<config::Config>().window_style.into(),
             ..TitleBar::window_options()
         };
 
@@ -63,5 +62,4 @@ fn main() {
         cx.activate(true);
     });
 }
-
 

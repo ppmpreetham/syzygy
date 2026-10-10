@@ -1,4 +1,4 @@
-mod config;
+pub mod config;
 pub mod menu;
 pub mod theme;
 
@@ -46,3 +46,4 @@ pub fn config_init(cx: &mut App) -> Result<()> {
     }).detach();
     Ok(())
 }
+

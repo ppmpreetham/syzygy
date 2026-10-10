@@ -6,12 +6,13 @@ use serde_json;
 use std::fs::File;
 use std::{fs, path::Path};
 use gpui_kit::Global;
-use super::theme::ThemeMode;
+use super::theme::{ThemeMode, WindowStyle};
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
     pub theme_mode: ThemeMode,
     pub theme_name: String,
+    pub window_style: WindowStyle,
 }
 impl Global for Config {}
 
@@ -20,6 +21,7 @@ impl Default for Config {
         Self {
             theme_mode: ThemeMode::System,
             theme_name: "Ayu Dark".to_string(),
+            window_style: WindowStyle::Opaque,
         }
     }
 }
@@ -50,5 +52,6 @@ impl Config {
         Self::load(file_path).unwrap_or_else(|_| Self::create(file_path).unwrap_or_default())
     }
 }
+
 
 
