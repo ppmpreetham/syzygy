@@ -31,7 +31,7 @@ pub fn proxy(proxy_state: Arc<ProxyState>, set_app_tab: Setter<AppTab>, set_intr
     let (active_tab, set_active_tab) = use_state(ProxyTab::Intercept);
 
     view! {
-        <div class="flex flex-col size-full bg-[#141517]">
+        <div class="flex flex-col size-full">
             <nav
                 underline
                 selected_index={*active_tab as usize}
@@ -59,6 +59,3 @@ pub fn proxy(proxy_state: Arc<ProxyState>, set_app_tab: Setter<AppTab>, set_intr
         </div>
     }
 }
-
-
-

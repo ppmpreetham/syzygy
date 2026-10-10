@@ -14,7 +14,7 @@ pub(super) fn inspector(request: String) {
     let (active_tab, set_active_tab) = use_state(InspectorTab::Inspect);
 
     view! {
-      <div class="flex flex-col size-full bg-[#141517]">
+      <div class="flex flex-col size-full">
         <nav
           underline
           selected_index={*active_tab as usize}

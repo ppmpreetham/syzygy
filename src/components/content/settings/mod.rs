@@ -3,7 +3,7 @@ use anyhow::Result;
 use directories;
 mod config;
 mod method;
-mod theme;
+pub mod theme;
 use std::fs::create_dir_all;
 use anyhow::anyhow;
 use crate::backend::storage::dots_storage_path;

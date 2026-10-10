@@ -24,7 +24,7 @@ pub fn user_section() {
 pub fn app_sidebar(collapsed: bool, active_tab: AppTab, set_active_tab: Setter<AppTab>) {
     view! {
         <Sidebar collapsed={collapsed} collapsible={SidebarCollapsible::Icon}
-            class="w-full h-full bg-[#141517] border-r border-[#272a2f]"
+            class="w-full h-full border-r border-[#272a2f]"
             footer={view! {
                 <SidebarFooter>
                     <UserSection />

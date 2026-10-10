@@ -3,6 +3,7 @@ use crate::components::sidebar::AppSidebar;
 use crate::components::titlebar::AppTitleBar;
 use crate::{backend::ProxyState, components::AppTab};
 
+use gpui_kit::component::ActiveTheme;
 use gpui_kit::*;
 
 use std::sync::Arc;
@@ -17,7 +18,7 @@ pub fn app(proxy_state: &Arc<ProxyState>) {
     let (intruder_tab, set_intruder_tab) = use_state(0usize);
 
     view! {
-        <div class="flex flex-col size-full bg-[#141517] text-[#ededed]">
+        <div class="flex flex-col size-full" bg={cx.theme().background} text_color={cx.theme().foreground}>
             <AppTitleBar />
             <div class="flex-1 w-full relative">
                 <Resizable id="main-layout" horizontal

@@ -238,7 +238,7 @@ pub fn intercept(proxy_state: Arc<ProxyState>) {
         // Main content
         <Resizable id="intercept" vertical>
           <ResizablePanel>
-            <div class="flex flex-col size-full bg-[#141517]">
+            <div class="flex flex-col size-full">
               <RequestTable
                 requests={requests.clone()}
                 set_selected_idx={set_selected_idx.clone()}

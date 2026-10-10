@@ -17,6 +17,7 @@ use gpui_kit::*;
 use std::sync::Arc;
 use std::{future, thread};
 use tokio::runtime;
+use components::content::settings::theme::theme_init;
 
 pub struct Main {
     proxy_state: Arc<ProxyState>,
@@ -43,8 +44,8 @@ fn main() {
         });
 
         gpui_kit::init(cx);
-        Theme::change(ThemeMode::Dark, None, cx);
-
+        // Theme::change(ThemeMode::Dark, None, cx);
+        theme_init(cx).ok();
         let window_options = WindowOptions {
             window_bounds: Some(config.window_size),
             window_background: WindowBackgroundAppearance::Opaque,
@@ -60,3 +61,6 @@ fn main() {
         cx.activate(true);
     });
 }
+
+
+

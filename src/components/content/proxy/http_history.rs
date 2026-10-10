@@ -142,7 +142,7 @@ pub fn http_history(proxy_state: Arc<ProxyState>, set_app_tab: Setter<components
         .collect::<Vec<_>>();
     let current_range = (*visible).clone();
     view! {
-        <div class="flex flex-col size-full bg-[#141517] text-[#ededed] w-auto">
+        <div class="flex flex-col size-full text-[#ededed] w-auto">
             <DataTable
                 rows={rows}
                 rows_count={if FULL_ROW_RAM { requests.len() } else { *total }}
