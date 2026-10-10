@@ -1,4 +1,4 @@
-use gpui_kit::component::input::{Editor, EditorState};
+use gpui_kit::component::input::EditorState;
 use gpui_kit::prelude::*;
 use gpui_kit::*;
 use zopra::{
@@ -6,33 +6,28 @@ use zopra::{
     hooks::{Setter, use_state},
     view,
 };
+use zopra::hooks::use_editor;
+use zopra::components::Editor;
 
 #[component]
 pub fn RequestInfo(content: SharedString, set_editor_entity: Setter<Option<Entity<EditorState>>>) {
-    let (editor, set_editor) = use_state(None::<Entity<EditorState>>);
+    let editor = use_editor(window, cx);
     let (prev_content, set_prev_content) = use_state(String::new());
+    let (is_init, set_is_init) = use_state(false);
 
-    if editor.is_none() {
-        let content_clone = content.clone();
-        let ed = cx.new(|cx| {
-            EditorState::new(window, cx)
-                .language("http")
-                .line_number(true)
-                .folding(true)
-                .default_value(content_clone)
-        });
-        set_editor_entity.set(Some(ed.clone()), cx);
-        set_editor(Some(ed));
+    if !*is_init {
+        set_is_init(true);
+        set_editor_entity.set(Some(editor.clone()), cx);
         set_prev_content(content.clone());
+        let content_clone = content.clone();
+        editor.update(cx, |ed, cx| {
+            ed.set_value(content_clone, window, cx);
+        });
     }
-
-    let Some(ed) = editor.as_ref() else {
-        return view! { <div /> };
-    };
 
     if *prev_content != content {
         set_prev_content(content.clone());
-        ed.update(cx, |ed, cx| {
+        editor.update(cx, |ed, cx| {
             ed.set_value(content.clone(), window, cx);
         });
     }
@@ -43,7 +38,13 @@ pub fn RequestInfo(content: SharedString, set_editor_entity: Setter<Option<Entit
                 "Request Info"
             </div>
             <div class="flex-1 size-full relative">
-                { Editor::new(ed).size_full() }
+                <Editor 
+                    state={&editor} 
+                    language="http" 
+                    line_numbers={true} 
+                    folding={true} 
+                    readonly={true} 
+                />
             </div>
         </div>
     }
