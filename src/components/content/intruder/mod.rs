@@ -26,6 +26,7 @@ pub fn intruder() {
     let input_state = use_input(window, cx);
     let (get_intruders, set_intruders) = use_state(|| vec![IntruderState::default()]);
     let (get_active_tab, set_active_tab) = use_state(0usize);
+    let (get_rows, set_rows) = use_state(IntruderState::default());
     let active_idx = *get_active_tab;
 
     view! {

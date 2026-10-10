@@ -9,7 +9,7 @@ use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use std::sync::Arc;
 use zopra::{component, hooks::use_state, use_effect, view};
-
+use crate::components::common::tree_sitter;
 mod browser;
 mod inspector;
 mod models;
@@ -34,7 +34,7 @@ pub fn intercept(proxy_state: Arc<ProxyState>) {
             "http",
             &GrammarConfig::new(
                 "http",
-                crate::components::common::tree_sitter::LANGUAGE.clone().into(),
+                tree_sitter::LANGUAGE.clone(),
                 vec![],
                 include_str!("queries/highlights.scm"),
                 include_str!("queries/injections.scm"),
