@@ -6,7 +6,7 @@ mod method;
 mod theme;
 use std::fs::create_dir_all;
 use anyhow::anyhow;
-use crate::{backend::proxy::certificate::storage_path};
+use crate::backend::storage::storage_path;
 use config::Config;
 
 pub fn init() -> Result<Config> {

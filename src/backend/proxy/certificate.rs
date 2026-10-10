@@ -6,12 +6,7 @@ use rcgen::{
 };
 use std::fs;
 use std::path::PathBuf;
-
-// get the storage path for the CA certificate. if not there, create it
-pub fn storage_path() -> Option<PathBuf> {
-    ProjectDirs::from("com", "syzygy", "SyZyGy")
-        .map(|proj_dirs| proj_dirs.config_dir().to_path_buf())
-}
+use super::super::storage::storage_path;
 
 // save the certificate on first launch
 fn ca_paths() -> Result<(PathBuf, PathBuf)> {

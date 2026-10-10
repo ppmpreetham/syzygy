@@ -1,6 +1,6 @@
 use std::fs::create_dir_all;
 
-use super::super::proxy::certificate::storage_path;
+use super::storage_path;
 use super::Exchange;
 use super::serializer::serialize;
 use anyhow::{Result, anyhow};
