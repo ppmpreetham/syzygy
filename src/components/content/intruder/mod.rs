@@ -1,10 +1,12 @@
+mod types;
+mod algorithm;
+
 use gpui_kit::*;
 use gpui_kit::base::input;
 use zopra::{component, hooks::use_state, view};
 use gpui_kit::component::menu::PopupMenuItem;
 use gpui_kit::component::menu::PopupMenu;
 use gpui_kit::component::menu::DropdownMenu;
-mod types;
 use types::AttackType;
 use strum::IntoEnumIterator;
 use zopra::hooks::use_input;
