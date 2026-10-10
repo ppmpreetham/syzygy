@@ -11,6 +11,7 @@ use zopra::hooks::{
     Snap, use_editor, use_editor_ranges, use_editor_text_styles, use_event, use_state,
 };
 use zopra::{component, view};
+use gpui_kit::component::ActiveTheme;
 
 #[component]
 pub fn IntruderEditor(
@@ -34,6 +35,7 @@ pub fn IntruderEditor(
     let selected_text = text[sel].to_string();
     let sections = sectioner(&text).unwrap_or_default();
 
+    // TODO: make these use themes
     use_editor_ranges(
         window,
         cx,
@@ -43,7 +45,7 @@ pub fn IntruderEditor(
             .map(|s| {
                 RangeDecoration::new(s.start..s.end)
                     .with_style(RangeDecorationStyle::Fill)
-                    .with_color(gpui_kit::rgba(0xFF000033).into())
+                    .with_color(cx.theme().primary.opacity(0.2))
             })
             .collect(),
     );
@@ -58,7 +60,7 @@ pub fn IntruderEditor(
                 TextDecoration::new(
                     s.start..s.end,
                     HighlightStyle {
-                        color: Some(gpui_kit::rgba(0x00FF00FF).into()),
+                        // color: Some(gpui_kit::rgba(0x00FF00FF).into()),
                         font_weight: Some(gpui_kit::FontWeight::BOLD),
                         ..Default::default()
                     },

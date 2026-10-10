@@ -1,9 +1,15 @@
 use crate::components::AppTab;
+use gpui::Bounds;
+use gpui::WindowBounds;
+use gpui::px;
+use gpui::size;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::Icon;
 use gpui_kit::component::Sizable;
 use gpui_kit::component::sidebar::*;
+use gpui_kit::gpui;
 use gpui_kit::*;
+use gpui_kit::component::ActiveTheme;
 use zopra::hooks::use_window;
 use gpui_kit::component::TitleBar;
 use zopra::{component, hooks::Setter, view};
@@ -12,18 +18,19 @@ use crate::components::content::settings::menu::SettingsMenu;
 
 #[component]
 pub fn user_section() {
-    let settings_window = use_window(|| gpui_kit::gpui::WindowOptions {
-        window_bounds: Some(gpui_kit::gpui::WindowBounds::Windowed(gpui_kit::gpui::Bounds {
-            origin: Default::default(),
-            size: gpui_kit::gpui::size(gpui_kit::gpui::px(800.0), gpui_kit::gpui::px(600.0)),
-        })),
+    let window_size = size(px(800.0), px(600.0));
+    let window_bounds = Bounds::centered(None, window_size, cx);
+
+    let settings_window = use_window(|| gpui::WindowOptions {
+        window_bounds: Some(WindowBounds::Windowed(window_bounds)),
         ..TitleBar::window_options()
     });
+
     view! {
         <div class="mt-auto h-[40px] flex items-center px-[6px] rounded-[7px] hover:bg-[#1d2024] w-full cursor-pointer" on_click={{ move |_, _, cx| {
                 settings_window.open(|window, cx| {
                     view! {
-                        <div class="w-full h-full flex flex-col bg-[#1e1e24]">
+                        <div class="w-full h-full flex flex-col" bg={cx.theme().background} text_color={cx.theme().foreground}>
                             <TitleBar class="border-b border-[#272a2f]">
                                 <div class="flex items-center gap-2 px-2 text-[#d9dbe0]">
                                     <div class="text-xs font-semibold">"Settings"</div>
@@ -74,5 +81,3 @@ pub fn app_sidebar(collapsed: bool, active_tab: AppTab, set_active_tab: Setter<A
         </Sidebar>
     }
 }
-
-

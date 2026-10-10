@@ -8,12 +8,26 @@ use crate::components::content::settings::theme::ThemeMode;
 use gpui_kit::component::Theme;
 use gpui_kit::component;
 
+fn apply_theme_state(cx: &mut App) {
+    let config = cx.global::<Config>();
+    match config.theme_mode {
+        ThemeMode::System => Theme::sync_system_appearance(None, cx),
+        _ => {
+            if let Some(theme) = ThemeRegistry::global(cx).themes().get(config.theme_name.as_str()).cloned() {
+                Theme::change(theme.mode, None, cx);
+                Theme::update(cx, |current| current.apply_config(&theme));
+            }
+        }
+    }
+}
+
 #[component]
 pub fn settings_menu() {
     view! {
         <Settings id="syzygy-settings" with_size={component::Size::Medium}>
             <SettingPage title="Appearance" default_open={true}>
                 <SettingGroup title="Theme">
+                    // TODO: later check if it's dark / light and only show those modes
                     <SettingItem title="Theme Mode" description="Select the overall application theme.">
                         <SettingDropdown
                             options={vec![
@@ -34,23 +48,14 @@ pub fn settings_menu() {
                                     "Dark" => ThemeMode::Dark,
                                     _ => ThemeMode::System,
                                 };
-                                app_cx.update_global::<Config, _>(|config, cx| {
-                                    config.theme_mode = mode;
-                                });
-                                Theme::change(
-                                    match mode {
-                                        ThemeMode::System => gpui_kit::component::ThemeMode::Dark,
-                                        ThemeMode::Light => gpui_kit::component::ThemeMode::Light,
-                                        ThemeMode::Dark => gpui_kit::component::ThemeMode::Dark,
-                                    },
-                                    None,
-                                    app_cx
-                                );
+                                app_cx.update_global::<Config, _>(|config, _| config.theme_mode = mode);
+                                apply_theme_state(app_cx);
                             } }}
+
                         />
                     </SettingItem>
                     <SettingItem title="Theme Name" description="Select the color scheme.">
-                        <SettingDropdown
+                        <SettingScrollableDropdown
                             options={{
                                 ThemeRegistry::global(cx)
                                     .sorted_themes()
@@ -63,14 +68,10 @@ pub fn settings_menu() {
                                 SharedString::from(cx.global::<Config>().theme_name.clone())
                             }
                             on_change={{ |val: SharedString, app_cx| {
-                                app_cx.update_global::<Config, _>(|config, cx| {
-                                    config.theme_name = val.to_string();
-                                });
-                                if let Some(theme) = ThemeRegistry::global(app_cx).themes().get(&val).cloned() {
-                                    Theme::change(theme.mode, None, app_cx);
-                                    Theme::update(app_cx, |current| current.apply_config(&theme));
-                                }
+                                app_cx.update_global::<Config, _>(|config, _| config.theme_name = val.to_string());
+                                apply_theme_state(app_cx);
                             } }}
+
                         />
                     </SettingItem>
                 </SettingGroup>
