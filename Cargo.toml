@@ -6,7 +6,7 @@ edition = "2024"
 
 [dependencies]
 tree-sitter = "0.26.13"
-tree-sitter-http = { path = "crates/tree-sitter-http" }
+tree-sitter-http = "0.1.0"
 gpui-kit = {version = "0.7", features = ["tree-sitter"]}
 rust-embed = "8"
 anyhow = "1"
