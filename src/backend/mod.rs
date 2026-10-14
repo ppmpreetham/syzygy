@@ -2,6 +2,7 @@ pub mod intercept;
 pub mod proxy;
 pub mod storage;
 pub mod uimeta;
+pub mod intruder;
 
 pub use intercept::server::start_proxy;
 pub use intercept::state::ProxyState;
