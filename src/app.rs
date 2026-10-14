@@ -18,7 +18,7 @@ pub fn app(proxy_state: &Arc<ProxyState>) {
     let (intruder_tab, set_intruder_tab) = use_state(0usize);
 
     view! {
-        <div class="flex flex-col size-full" bg={cx.theme().background} text_color={cx.theme().foreground}>
+        <div class="flex flex-col size-full bg-theme-background text-theme-foreground">
             <AppTitleBar />
             <div class="flex-1 w-full relative">
                 <Resizable id="main-layout" horizontal

@@ -30,7 +30,7 @@ pub fn user_section() {
         <div class="mt-auto h-[40px] flex items-center px-[6px] rounded-[7px] hover:bg-[#1d2024] w-full cursor-pointer" on_click={{ move |_, _, cx| {
                 settings_window.open(|window, cx| {
                     view! {
-                        <div class="w-full h-full flex flex-col" bg={cx.theme().background} text_color={cx.theme().foreground}>
+                        <div class="w-full h-full flex flex-col bg-theme-background text-theme-foreground">
                             <TitleBar class="border-b border-[#272a2f]">
                                 <div class="flex items-center gap-2 px-2 text-[#d9dbe0]">
                                     <div class="text-xs font-semibold">"Settings"</div>
@@ -81,3 +81,4 @@ pub fn app_sidebar(collapsed: bool, active_tab: AppTab, set_active_tab: Setter<A
         </Sidebar>
     }
 }
+

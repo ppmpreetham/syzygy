@@ -168,7 +168,7 @@ pub fn intercept(proxy_state: Arc<ProxyState>) {
                 set_intercept_state(enabled);
                 }
               }}
-              class={if *intercept_state { "bg-white text-black" } else { "bg-black text-white" }}
+              class={if *intercept_state { "bg-theme-primary text-black" } else { "bg-black text-white" }}
             />
             <DropdownButton
               id="forward-dropdown"
