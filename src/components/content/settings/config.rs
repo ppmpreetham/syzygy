@@ -1,17 +1,26 @@
-use anyhow::{Context, Error, Result};
-use gpui_kit::App;
-use gpui_kit::component::Theme;
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use serde_json;
 use std::fs::File;
 use std::{fs, path::Path};
 use gpui_kit::Global;
 use super::theme::{ThemeMode, WindowStyle};
 
-#[derive(Deserialize, Serialize)]
+fn default_light_theme() -> String {
+    "Default Light".to_string()
+}
+
+fn default_dark_theme() -> String {
+    "Ayu Dark".to_string()
+}
+
+#[derive(Deserialize, Serialize, Clone)]
 pub struct Config {
     pub theme_mode: ThemeMode,
-    pub theme_name: String,
+    #[serde(default = "default_light_theme")]
+    pub light_theme_name: String,
+    #[serde(default = "default_dark_theme")]
+    pub dark_theme_name: String,
+    #[serde(default)]
     pub window_style: WindowStyle,
 }
 impl Global for Config {}
@@ -20,12 +29,12 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             theme_mode: ThemeMode::System,
-            theme_name: "Ayu Dark".to_string(),
+            light_theme_name: default_light_theme(),
+            dark_theme_name: default_dark_theme(),
             window_style: WindowStyle::Opaque,
         }
     }
 }
-
 
 impl Config {
     /// load config
@@ -52,6 +61,3 @@ impl Config {
         Self::load(file_path).unwrap_or_else(|_| Self::create(file_path).unwrap_or_default())
     }
 }
-
-
-
