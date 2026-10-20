@@ -29,6 +29,10 @@ log = "0.4.34"
 serde = "1.0.229"
 serde_json = "1.0.151"
 reqwest = "0.13.5"
+futures = "0.3.34"
+bytes = "1.12.1"
+csv = "1.4.0"
+polars = { version = "0.55.2", features = ["csv", "lazy", "sql"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 wry = { version = "0.53.5" }

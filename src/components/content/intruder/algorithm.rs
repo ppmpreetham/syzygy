@@ -7,10 +7,10 @@ pub struct SectionPosition<'a> {
     pub word: &'a str,
 }
 
-pub(super) const GRAPHEME_LEN: usize = '§'.len_utf8();
+pub(crate) const GRAPHEME_LEN: usize = '§'.len_utf8();
 
 // fucking stores each placeholder, just like burpsuite baddies
-pub(super) fn sectioner(text: &str) -> Result<Vec<SectionPosition<'_>>, usize> {
+pub(crate) fn sectioner(text: &str) -> Result<Vec<SectionPosition<'_>>, usize> {
     let mut sections = Vec::new();
     let mut pos = 0;
     let mut last_i = 0;

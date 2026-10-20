@@ -1,5 +1,34 @@
-use reqwest;
+use reqwest::{Client, Method, Response, header::HeaderMap};
+use anyhow::{Context, Result};
+use std::sync::Arc;
+use tokio::{sync::mpsc, sync::Semaphore, time::Instant};
+use futures::future::join_all;
+use bytes::Bytes;
 
-pub async fn request_sender(){
+#[derive(Debug, Clone)]
+pub struct URL<'a> {
+    pub base: &'a str,
+    pub method: Method,
+    pub headers: HeaderMap,
+    pub body: Option<Bytes>,
+}
+
+// payload is dealt in another function
+async fn send_url(client: &Client, url: URL<'_>) -> Result<Response> {
+    client
+        .request(url.method, url.base)
+        .headers(url.headers)
+        .body(url.body.unwrap_or_default())
+        .send()
+        .await
+        .context("failed to execute request")
+}
+
+
+#[tokio::main]
+pub async fn request_sender() -> Result<()> {
+  let start_time = Instant::now();
+  // todo: make it the size of the payloads later
+  // let (tx, mut rx) = mpsc::channel(100);
   todo!()
 }

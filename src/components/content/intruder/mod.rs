@@ -17,6 +17,8 @@ use zopra::{
     view,
 };
 
+pub use algorithm::{SectionPosition};
+
 #[derive(Clone, PartialEq, Default)]
 pub struct VariableRow {
     pub variable: SharedString,
