@@ -17,7 +17,7 @@ use zopra::{
     view,
 };
 
-pub use algorithm::{SectionPosition};
+pub use algorithm::{sectioner, SectionPosition, GRAPHEME_LEN};
 
 #[derive(Clone, PartialEq, Default)]
 pub struct VariableRow {

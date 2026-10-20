@@ -10,12 +10,12 @@ pub struct SectionPosition<'a> {
 pub(crate) const GRAPHEME_LEN: usize = '§'.len_utf8();
 
 // fucking stores each placeholder, just like burpsuite baddies
-pub(crate) fn sectioner(text: &str) -> Result<Vec<SectionPosition<'_>>, usize> {
+pub fn sectioner(text: &str) -> Result<Vec<SectionPosition<'_>>, usize> {
     let mut sections = Vec::new();
     let mut pos = 0;
     let mut last_i = 0;
 
-    text.split("§").enumerate().for_each(|(i, word)| {
+    text.split('§').enumerate().for_each(|(i, word)| {
         last_i = i;
         if (i & 1) == 1 {
             sections.push(SectionPosition {
