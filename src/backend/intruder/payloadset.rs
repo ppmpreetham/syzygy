@@ -36,8 +36,10 @@ pub fn read_csv(path: impl AsRef<Path>, has_headers: bool, separator: u8) -> Pol
 // TODO: add logger later
 pub fn run_sql_query(file: impl AsRef<Path>, query: &str, has_headers: bool, seperator: u8) -> Result<DataFrame, String>{
   let df = read_csv(file, has_headers, seperator).map_err(|e| format!("failed to load csv file: {e}"))?;
+
   let mut ctx = SQLContext::new();
   ctx.register("payload ith file", df.lazy());
+
   let plan = ctx.execute(query).map_err(|e| format!("SQL Syntax Error: {e}"))?;
   plan.collect().map_err(|e| format!("Query execution failed: {e}"))
 }
