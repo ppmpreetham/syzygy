@@ -26,8 +26,20 @@ impl CompiledSegments{
     Self {segments}
   }
 
+  // reconstruct bad boy back without using memory
   #[inline]
-  pub fn reconstruct(&self, payload: &str, buffer: &mut Vec<u8>){
-    todo!()
+  pub fn reconstruct(&self, payload: &str, buffer: &mut Vec<u8>) {
+      buffer.clear();
+
+      if let Some((first, rest)) = self.segments.split_first() {
+          buffer.extend_from_slice(first);
+          buffer.extend_from_slice(payload.as_bytes());
+
+          for segment in rest {
+              buffer.extend_from_slice(segment);
+          }
+      } else {
+          buffer.extend_from_slice(payload.as_bytes());
+      }
   }
 }
