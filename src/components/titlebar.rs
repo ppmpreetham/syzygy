@@ -1,4 +1,5 @@
 use gpui_kit::*;
+use zopra::ui::TitleBar;
 use zopra::{component, view};
 
 #[component]

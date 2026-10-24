@@ -9,7 +9,12 @@ use gpui_kit::component::{menu, menu::PopupMenuItem};
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::*;
 use std::sync::Arc;
-use zopra::{component, hooks::use_state, use_effect, view};
+use zopra::ui::{DropdownButton, Resizable, ResizablePanel};
+use zopra::{
+    component,
+    hooks::{Signal, use_signal, use_state},
+    use_effect, view,
+};
 mod browser;
 mod inspector;
 mod models;
@@ -42,111 +47,52 @@ pub fn intercept(proxy_state: Arc<ProxyState>) {
             ),
         );
     });
-    let (get_requests, set_requests) = use_state(Vec::<(usize, RequestRow)>::new());
-    let (get_loop, set_loop) = use_state(false);
+    let (requests, set_requests) = use_state(Vec::<(usize, RequestRow)>::new());
 
-    if !*get_loop {
-        set_loop(true);
-        let state = Arc::clone(&proxy_state);
-        let set_reqs = set_requests.clone();
+    use_effect!(
+        || {
+            cx.spawn(async move |cx| {
+                let initial = proxy_state.pending_rows();
+                cx.update(|cx| set_requests(initial));
 
-        window
-            .spawn(cx, move |cx_ref: &mut AsyncWindowContext| {
-                let mut async_cx = (*cx_ref).clone();
-                async move {
-                    let initial = state.pending_rows();
-                    if !initial.is_empty() {
-                        async_cx
-                            .update(|_, cx| {
-                                set_reqs(initial);
-                            })
-                            .ok();
-                    }
-
-                    let mut rx = state.subscribe();
-                    while let Ok(event) = rx.recv().await {
-                        async_cx
-                            .update(|_, cx| {
-                                if let ProxyEvent::Intercepted(id, row) = event {
-                                    set_reqs(|requests| requests.push((id, row)));
-                                }
-                            })
-                            .ok();
+                let mut rx = proxy_state.subscribe();
+                while let Ok(event) = rx.recv().await {
+                    if let ProxyEvent::Intercepted(id, row) = event
+                        && cx.update(|cx| set_requests.try_update(|requests| requests.push((id, row)))).is_none()
+                    {
+                        break; // the component unmounted
                     }
                 }
             })
             .detach();
-    }
+        },
+        []
+    );
 
-    let requests = get_requests.clone();
-    let (selected_idx, set_selected_idx) = use_state(None::<usize>);
+    let selected = use_signal(None::<usize>);
+    let selected_request = selected()
+        .and_then(|index| requests.read().get(index))
+        .map(|(id, row)| (*id, row.host.clone()));
+    let selected_id = selected_request.as_ref().map(|(id, _)| *id);
 
-    let selected = (*selected_idx).and_then(|i| requests.get(i));
-    let selected_id = selected.map(|request| request.0);
-    let selected_host_val = selected
-        .map(|request| request.1.host.clone())
-        .unwrap_or_default();
-
-    let (req_content, set_req_content) = use_state("No request selected");
-    let (req_host, set_req_host) = use_state(String::new());
-
-    let state = proxy_state.clone();
-    let set_rc = set_req_content.clone();
-    let set_rh = set_req_host.clone();
-
+    let (content, set_content) = use_state("No request selected");
+    let (host, set_host) = use_state(SharedString::default());
     use_effect!(
         move || {
-            let content = selected_id
-                .and_then(|id| state.pending_request_text(id))
-                .unwrap_or_else(|| "No request selected".to_string());
-            set_rc(content);
-            set_rh(selected_host_val);
+            set_content(
+                selected_id
+                    .and_then(|id| proxy_state.pending_request_text(id))
+                    .map_or_else(|| "No request selected".into(), Into::into),
+            );
+            set_host(selected_request.map(|(_, host)| host).unwrap_or_default());
         },
         [selected_id]
     );
 
-    let req_content = &(*req_content);
-    let req_host = (*req_host).clone();
-
-    let (forward_action, set_forward_action) = use_state(ForwardAction::Forward);
-    let (drop_action, set_drop_action) = use_state(DropAction::Drop);
-    let (intercept_state, set_intercept_state) = use_state(proxy_state.intercept_enabled());
-    let (editor_entity, set_editor_entity) = use_state(None::<Entity<EditorState>>);
-
-    let build_fwd_menu = {
-        let set_fwd = set_forward_action.clone();
-        move |menu: menu::PopupMenu,
-              _: &mut gpui_kit::Window,
-              _: &mut gpui_kit::Context<menu::PopupMenu>| {
-            let s1 = set_fwd.clone();
-            let s2 = set_fwd.clone();
-            menu.item(
-                PopupMenuItem::new("Forward")
-                    .on_click(move |_, _, cx| s1.set(ForwardAction::Forward, cx)),
-            )
-            .item(
-                PopupMenuItem::new("Forward All")
-                    .on_click(move |_, _, cx| s2.set(ForwardAction::ForwardAll, cx)),
-            )
-        }
-    };
-
-    let build_drp_menu = {
-        let set_drp = set_drop_action.clone();
-        move |menu: menu::PopupMenu,
-              _: &mut gpui_kit::Window,
-              _: &mut gpui_kit::Context<menu::PopupMenu>| {
-            let s1 = set_drp.clone();
-            let s2 = set_drp.clone();
-            menu.item(
-                PopupMenuItem::new("Drop").on_click(move |_, _, cx| s1.set(DropAction::Drop, cx)),
-            )
-            .item(
-                PopupMenuItem::new("Drop All")
-                    .on_click(move |_, _, cx| s2.set(DropAction::DropAll, cx)),
-            )
-        }
-    };
+    let forward_action = use_signal(ForwardAction::Forward);
+    let drop_action = use_signal(DropAction::Drop);
+    let intercepting = use_signal(proxy_state.intercept_enabled());
+    let request_editor = use_signal(None::<Entity<EditorState>>);
 
     view! {
       <div class="flex flex-col size-full justify-start text-[#ededed]">
@@ -154,82 +100,71 @@ pub fn intercept(proxy_state: Arc<ProxyState>) {
           <div class="flex flex-row gap-2 items-center">
             <button
               id="intercept-on-btn"
-              label={if *intercept_state { "Intercept On" } else { "Intercept Off" }}
-              on_click={{
-              let state = Arc::clone(&proxy_state);
-              let set_requests = set_requests.clone();
-              let set_intercept_state = set_intercept_state.clone();
-              move |_, _, cx| {
-                let enabled = !*set_intercept_state.current();
-                state.set_intercept(enabled);
+              label={if intercepting() { "Intercept On" } else { "Intercept Off" }}
+              on_click={|| {
+                let enabled = !intercepting();
+                proxy_state.set_intercept(enabled);
                 if !enabled {
-                  set_requests.update(Vec::clear, cx);
+                  set_requests(|requests| requests.clear());
                 }
-                set_intercept_state(enabled);
-                }
+                intercepting(enabled);
               }}
-              class={if *intercept_state { "bg-theme-primary text-black" } else { "bg-black text-white" }}
+              class={if intercepting() { "bg-theme-primary text-black" } else { "bg-black text-white" }}
             />
             <DropdownButton
               id="forward-dropdown"
-              button={view! { <button id="forward-btn" label={match *forward_action {
+              button={view! { <button id="forward-btn" label={match forward_action() {
                 ForwardAction::Forward => "Forward",
                 ForwardAction::ForwardAll => "Forward All",
-              }} on_click={{
-                let state = Arc::clone(&proxy_state);
-                let set_requests = set_requests.clone();
-                let set_intercept_state = set_intercept_state.clone();
-                move |_, _, cx| {
-                  match *set_forward_action.current() {
-                      ForwardAction::Forward => if let Some(id) = selected_id && let Some(edited) = editor_entity.as_ref().and_then(|editor| {
-                            parse_request(editor.read(cx).value().as_ref())
-                        }) {
-                            set_requests(|requests| requests.retain(|request| request.0 != id));
-                            state.forward(id, Some(edited));
-
-                      },
-                      ForwardAction::ForwardAll => {
-                        set_requests.update(Vec::clear, cx);
-                        state.forward_all();
-                        set_intercept_state(false);
-                      },
-                  }
-                }
+              }} on_click={|_, _, cx| match forward_action() {
+                ForwardAction::Forward => if let Some(id) = selected_id
+                  && let Some(edited) = request_editor
+                    .read()
+                    .as_ref()
+                    .and_then(|editor| parse_request(editor.read(cx).value().as_ref()))
+                {
+                  set_requests(|requests| requests.retain(|request| request.0 != id));
+                  proxy_state.forward(id, Some(edited));
+                },
+                ForwardAction::ForwardAll => {
+                  set_requests(|requests| requests.clear());
+                  proxy_state.forward_all();
+                  intercepting(false);
+                },
               }} /> }}
-              dropdown_menu={build_fwd_menu}
+              dropdown_menu={action_menu(forward_action, [
+                ("Forward", ForwardAction::Forward),
+                ("Forward All", ForwardAction::ForwardAll),
+              ])}
             />
             <DropdownButton
               id="drop-dropdown"
-              button={view! { <button id="drop-btn" label={match *drop_action {
+              button={view! { <button id="drop-btn" label={match drop_action() {
                 DropAction::Drop => "Drop",
                 DropAction::DropAll => "Drop All",
-              }} on_click={{
-                let state = Arc::clone(&proxy_state);
-                let set_requests = set_requests.clone();
-                let set_intercept_state = set_intercept_state.clone();
-                move |_, _, cx| {
-                  match *set_drop_action.current() {
-                      DropAction::Drop => if let Some(id) = selected_id {
-                        set_requests(|requests| requests.retain(|request| request.0 != id));
-                        state.drop_request(id);
-                      },
-                      DropAction::DropAll => {
-                        set_requests.update(Vec::clear, cx);
-                        state.drop_all();
-                        set_intercept_state(false);
-                      },
-                  }
-                }
+              }} on_click={|| match drop_action() {
+                DropAction::Drop => if let Some(id) = selected_id {
+                  set_requests(|requests| requests.retain(|request| request.0 != id));
+                  proxy_state.drop_request(id);
+                },
+                DropAction::DropAll => {
+                  set_requests(|requests| requests.clear());
+                  proxy_state.drop_all();
+                  intercepting(false);
+                },
               }} /> }}
-              dropdown_menu={build_drp_menu}
+              dropdown_menu={action_menu(drop_action, [
+                ("Drop", DropAction::Drop),
+                ("Drop All", DropAction::DropAll),
+              ])}
             />
           </div>
           <div class="flex flex-row gap-2 items-center">
-            <div when={!req_host.is_empty()}>{format!("Request to {}", req_host)}</div>
+            <div when={!host.read().is_empty()}>{format!("Request to {}", host.read())}</div>
             <button
               id="open-browser"
               label="Open Browser"
-              on_click={move |_, window, cx| open_browser(window, cx)}
+              on_click={|_, window, cx| open_browser(window, cx)}
             />
             <div>"hamburger"</div>
           </div>
@@ -239,23 +174,30 @@ pub fn intercept(proxy_state: Arc<ProxyState>) {
         <Resizable id="intercept" vertical>
           <ResizablePanel>
             <div class="flex flex-col size-full">
-              <RequestTable
-                requests={requests.clone()}
-                set_selected_idx={set_selected_idx.clone()}
-              />
+              <RequestTable requests={requests} selected={selected} />
             </div>
           </ResizablePanel>
           <ResizablePanel>
             <Resizable id="intercept-req-info" horizontal>
               <ResizablePanel>
-                <RequestInfo content={req_content} set_editor_entity={set_editor_entity.clone()} />
+                <RequestInfo content={content()} editor_entity={request_editor} />
               </ResizablePanel>
               <ResizablePanel>
-                <Inspector request={"Hello".to_string()} />
+                <Inspector request="Hello" />
               </ResizablePanel>
             </Resizable>
           </ResizablePanel>
         </Resizable>
       </div>
+    }
+}
+fn action_menu<T: Clone + PartialEq + 'static, const N: usize>(
+    action: Signal<T>,
+    actions: [(&'static str, T); N],
+) -> impl Fn(menu::PopupMenu, &mut Window, &mut Context<menu::PopupMenu>) -> menu::PopupMenu + 'static {
+    move |menu, _, _| {
+        actions.iter().cloned().fold(menu, |menu, (label, value)| {
+            menu.item(PopupMenuItem::new(label).on_click(move |_, _, cx| action.set(value.clone(), cx)))
+        })
     }
 }

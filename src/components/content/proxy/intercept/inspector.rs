@@ -1,5 +1,6 @@
 use gpui_kit::*;
 use strum::FromRepr;
+use zopra::ui::{Tab, TabBar};
 use zopra::{component, hooks::use_state, view};
 #[derive(Clone, Copy, PartialEq, Eq, FromRepr)]
 #[repr(usize)]
@@ -15,9 +16,9 @@ pub(super) fn inspector(request: String) {
 
     view! {
       <div class="flex flex-col size-full">
-        <nav
+        <TabBar
           underline
-          selected_index={*active_tab as usize}
+          selected_index={active_tab() as usize}
               on_click={move |index, _, cx| {
                 if let Some(tab) = InspectorTab::from_repr(*index) {
               set_active_tab(tab);
@@ -27,11 +28,11 @@ pub(super) fn inspector(request: String) {
         >
           <Tab label="Inspector" />
           <Tab label="Notes" />
-        </nav>
+        </TabBar>
         <div class="flex-1 w-full text-[#ededed]">
-          {match *active_tab {
+          {match active_tab() {
             // TODO: match it with other tabs later
-            _ => view! { <div></div> }.into_any_element(),
+            _ => view! { <div></div> },
           }}
         </div>
       </div>

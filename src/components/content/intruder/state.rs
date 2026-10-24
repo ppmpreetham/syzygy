@@ -4,6 +4,51 @@ use gpui_kit::SharedString;
 use gpui_kit::{App, Entity, Window, base::input::EditorState};
 use wry::http::Request;
 
+pub struct Intruders {
+    pub tabs: Vec<IntruderState>,
+    pub active: usize,
+}
+
+impl Default for Intruders {
+    fn default() -> Self {
+        Self {
+            tabs: vec![IntruderState::default()],
+            active: 0,
+        }
+    }
+}
+
+impl Intruders {
+    #[must_use]
+    pub fn current(&self) -> Option<&IntruderState> {
+        self.tabs.get(self.active)
+    }
+
+    pub fn current_mut(&mut self) -> Option<&mut IntruderState> {
+        self.tabs.get_mut(self.active)
+    }
+
+    pub fn row_mut(&mut self, variable: &str) -> Option<&mut VariableRow> {
+        self.current_mut()?
+            .rows
+            .iter_mut()
+            .find(|row| row.variable == variable)
+    }
+
+    pub fn open(&mut self, target: SharedString, raw_request: String) {
+        self.tabs
+            .push(IntruderState::new(self.tabs.len() + 1, target, raw_request));
+        self.active = self.tabs.len() - 1;
+    }
+
+    pub fn close(&mut self, index: usize) {
+        if self.tabs.len() > 1 {
+            self.tabs.remove(index);
+        }
+        self.active = 0;
+    }
+}
+
 #[derive(Clone, PartialEq)]
 pub struct IntruderState {
     pub req_id: usize,
@@ -34,6 +79,24 @@ impl IntruderState {
             update_host_header: true,
             rows: Vec::new(),
         }
+    }
+
+    pub fn set_request(&mut self, raw_request: String, sections: &[SectionPosition]) {
+        let rows = sections
+            .iter()
+            .map(|section| {
+                self.rows
+                    .iter()
+                    .find(|row| row.variable == section.word)
+                    .cloned()
+                    .unwrap_or_else(|| VariableRow {
+                        variable: section.word.into(),
+                        ..Default::default()
+                    })
+            })
+            .collect();
+        self.raw_request = raw_request;
+        self.rows = rows;
     }
 
     pub fn add_variable(&mut self, word: &str) {

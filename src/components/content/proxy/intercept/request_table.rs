@@ -1,7 +1,7 @@
 use gpui_kit::prelude::*;
 use zopra::{
     component,
-    hooks::{Setter, Snap},
+    hooks::Signal,
     view,
 };
 
@@ -24,20 +24,18 @@ fn row_time(time: SystemTime) -> String {
 
 #[component]
 pub(super) fn request_table(
-    requests: Snap<Vec<(usize, RequestRow)>>,
-    set_selected_idx: Setter<Option<usize>>,
+    requests: Signal<Vec<(usize, RequestRow)>>,
+    selected: Signal<Option<usize>>,
 ) {
     view! {
         <DataTable
-            rows={requests.clone()}
+            rows={requests}
             row_selectable={true}
             cell_selectable={false}
             col_selectable={false}
             loop_selection={true}
             row_header={true}
-            on_select_row={move |row_ix, cx| {
-                set_selected_idx.set(Some(row_ix), cx);
-            }}
+            on_select_row={|row_ix, cx| selected(Some(row_ix))}
         >
             <Col id="time" title="Time" width={80.} r={|req| row_time(req.1.time)} sortable />
             <Col id="req_type" title="Type" width={80.} r={|req| format!("{:?}", req.1.addr_type)} sortable />

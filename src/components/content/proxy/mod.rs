@@ -1,9 +1,8 @@
-use crate::components::AppTab;
-use crate::components::content::intruder::state::IntruderState;
 use gpui_kit::*;
 use std::sync::Arc;
 use strum_macros::FromRepr;
-use zopra::{component, hooks::Setter, hooks::use_state, view};
+use zopra::ui::{Tab, TabBar};
+use zopra::{component, hooks::use_state, view};
 
 pub mod http_history;
 pub mod intercept;
@@ -27,22 +26,17 @@ pub enum ProxyTab {
 }
 
 #[component]
-pub fn proxy(
-    proxy_state: Arc<ProxyState>,
-    set_app_tab: Setter<AppTab>,
-    set_intruders: Setter<Vec<IntruderState>>,
-    set_intruder_tab: Setter<usize>,
-) {
+pub fn proxy(proxy_state: Arc<ProxyState>) {
     let (active_tab, set_active_tab) = use_state(ProxyTab::Intercept);
 
     view! {
         <div class="flex flex-col size-full">
-            <nav
+            <TabBar
                 underline
-                selected_index={*active_tab as usize}
-                on_click={move |index, _, cx| {
+                selected_index={active_tab() as usize}
+                on_click={|index, _, cx| {
                     if let Some(tab) = ProxyTab::from_repr(*index) {
-                        set_active_tab.set(tab, cx);
+                        set_active_tab(tab);
                     }
                 }}
                 class="px-4"
@@ -51,14 +45,14 @@ pub fn proxy(
                 <Tab label="HTTP history" />
                 <Tab label="WebSockets history" />
                 <Tab label="Options" />
-            </nav>
+            </TabBar>
 
             <div class="flex-1 w-full text-[#ededed]">
-                {match *active_tab {
-                    ProxyTab::Intercept => view! { <Intercept proxy_state={proxy_state.clone()} /> }.into_any_element(),
-                    ProxyTab::HttpHistory => view! { <HttpHistory proxy_state={proxy_state.clone()} set_app_tab={set_app_tab.clone()} set_intruders={set_intruders.clone()} set_intruder_tab={set_intruder_tab.clone()} /> }.into_any_element(),
-                    ProxyTab::WebSocketsHistory => view! { <WebsocketsHistory /> }.into_any_element(),
-                    ProxyTab::Options => view! { <Options /> }.into_any_element(),
+                {match active_tab() {
+                    ProxyTab::Intercept => view! { <Intercept proxy_state={proxy_state} /> },
+                    ProxyTab::HttpHistory => view! { <HttpHistory proxy_state={proxy_state} /> },
+                    ProxyTab::WebSocketsHistory => view! { <WebsocketsHistory /> },
+                    ProxyTab::Options => view! { <Options /> },
                 }}
             </div>
         </div>

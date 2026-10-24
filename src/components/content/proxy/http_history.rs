@@ -1,8 +1,8 @@
 use crate::backend::ProxyState;
 use crate::backend::intercept::state::ProxyEvent;
 use crate::backend::uimeta::RequestRow;
-use crate::components;
-use crate::components::content::intruder;
+use crate::components::AppTab;
+use crate::components::content::intruder::state::Intruders;
 use crate::globals::FULL_ROW_RAM;
 use gpui_kit::component::menu::{PopupMenu, PopupMenuItem};
 use gpui_kit::component::table::TableState;
@@ -13,15 +13,15 @@ use std::collections::HashMap;
 use std::ops::Range;
 use std::sync::Arc;
 use zopra::components::declarative_table::DeclarativeTableDelegate;
-use zopra::hooks::Setter;
-use zopra::{component, hooks::use_state, view};
+use zopra::{
+    component,
+    hooks::{Signal, use_context, use_signal, use_state},
+    use_effect, view,
+};
 
-type HistoryRow = (
-    usize,
-    RequestRow,
-    Option<(u32, u32)>,
-    Setter<HashMap<usize, (u32, u32)>>,
-);
+type HistoryRow = (usize, RequestRow, Option<(u32, u32)>);
+
+type Highlights = HashMap<usize, (u32, u32)>;
 
 fn row_time(row: &RequestRow) -> String {
     row.start_response_timer
@@ -91,74 +91,56 @@ pub fn shortcut_item(name: String, shortcut: String) {
     }
 }
 
-#[allow(clippy::too_many_lines)]
 #[component]
-pub fn http_history(
-    proxy_state: Arc<ProxyState>,
-    set_app_tab: Setter<components::AppTab>,
-    set_intruders: Setter<Vec<intruder::state::IntruderState>>,
-    set_intruder_tab: Setter<usize>,
-) {
-    let (get_highlights, set_highlights) = use_state(HashMap::<usize, (u32, u32)>::new());
-    let (get_visible, set_visible) = use_state(0..1000usize);
-    let (get_total, set_total) = use_state(0usize);
-    let (started, set_started) = use_state(false);
+pub fn http_history(proxy_state: Arc<ProxyState>) {
+    let app_tab: Signal<AppTab> = use_context();
+    let intruders: Signal<Intruders> = use_context();
+    let highlights = use_signal(Highlights::new());
+    let (visible, set_visible) = use_state(0..1000usize);
+    let total = use_signal(0usize);
 
-    if !*started {
-        set_started(true);
-        let state = Arc::clone(&proxy_state);
-        let set_tot = set_total.clone();
-        window
-            .spawn(cx, move |cx_ref: &mut AsyncWindowContext| {
-                let mut async_cx = (*cx_ref).clone();
-                async move {
-                    let mut rx = state.subscribe();
-                    let cnt = state.history_count();
-                    async_cx.update(|_, cx| set_tot(cnt)).ok();
-                    while let Ok(event) = rx.recv().await {
-                        if matches!(event, ProxyEvent::History(_, _)) {
-                            let cnt = state.history_count();
-                            async_cx.update(|_, cx| set_tot(cnt)).ok();
-                        }
+    use_effect!(
+        || {
+            cx.spawn(async move |cx| {
+                let mut rx = proxy_state.subscribe();
+                cx.update(|cx| total(proxy_state.history_count()));
+                while let Ok(event) = rx.recv().await {
+                    if matches!(event, ProxyEvent::History(_, _))
+                        && cx.update(|cx| total.try_update(|total| *total = proxy_state.history_count())).is_none()
+                    {
+                        break; // the component unmounted
                     }
                 }
             })
             .detach();
-    }
-    let highlights = get_highlights(cx);
-    let visible = get_visible(cx);
-    let total = get_total(cx);
+        },
+        []
+    );
 
+    let range = visible();
     let requests = if FULL_ROW_RAM {
         proxy_state.history_rows()
     } else {
-        proxy_state.history_slice((*visible).clone())
+        proxy_state.history_slice(range.clone())
     };
-    let rows = requests
-        .iter()
-        .map(|(history_idx, row)| {
-            (
-                *history_idx,
-                row.clone(),
-                highlights.get(history_idx).copied(),
-                set_highlights.clone(),
-            )
-        })
-        .collect::<Vec<_>>();
-    let current_range = (*visible).clone();
+    let rows_count = if FULL_ROW_RAM { requests.len() } else { total() };
+    let rows = {
+        let highlights = highlights.read();
+        requests
+            .into_iter()
+            .map(|(index, row)| (index, row, highlights.get(&index).copied()))
+            .collect::<Vec<HistoryRow>>()
+    };
+
     view! {
         <div class="flex flex-col size-full text-[#ededed] w-auto">
             <DataTable
                 rows={rows}
-                rows_count={if FULL_ROW_RAM { requests.len() } else { *total }}
-                data_offset={if FULL_ROW_RAM { 0 } else { visible.start }}
-                on_visible_rows_changed={{
-                    let current_range = current_range.clone();
-                    let set_visible = set_visible.clone();
-                    move |range: Range<usize>, cx: &mut gpui_kit::App| {
-                        if !FULL_ROW_RAM && range != current_range {
-                          set_visible.set(range, cx);
-                        }
+                rows_count={rows_count}
+                data_offset={if FULL_ROW_RAM { 0 } else { range.start }}
+                on_visible_rows_changed={|range: Range<usize>, cx: &mut App| {
+                    if !FULL_ROW_RAM && range != visible() {
+                        set_visible(range);
                     }
                 }}
                 row_selectable={true}
@@ -166,12 +148,8 @@ pub fn http_history(
                 col_selectable={false}
                 loop_selection={true}
                 row_header={true}
-                on_context_menu={{
-                    let set_app_tab = set_app_tab.clone();
-                    let set_intruders = set_intruders.clone();
-                    move |req, row_ix, menu, window, cx| {
-                        history_context_menu(req, row_ix, menu, window, cx, set_app_tab.clone(), set_intruders.clone(), set_intruder_tab.clone())
-                    }
+                on_context_menu={|row, _row_ix, menu, window, cx| {
+                    history_context_menu(row, menu, window, cx, app_tab, intruders, highlights)
                 }}
             >
                 <Col id="id" title="#" width={50.} r={|req| highlighted_cell(req, req.0.to_string())} />
@@ -186,59 +164,43 @@ pub fn http_history(
     }
 }
 
-// on rigth click
+// on right click
 fn history_context_menu(
-    req: &HistoryRow,
-    _row_ix: usize,
+    row: &HistoryRow,
     menu: PopupMenu,
     window: &mut Window,
     cx: &mut Context<TableState<DeclarativeTableDelegate<HistoryRow>>>,
-    set_app_tab: Setter<components::AppTab>,
-    set_intruders: Setter<Vec<intruder::state::IntruderState>>,
-    set_intruder_tab: Setter<usize>,
+    app_tab: Signal<AppTab>,
+    intruders: Signal<Intruders>,
+    highlights: Signal<Highlights>,
 ) -> PopupMenu {
-    let url = format!("https://{}{}", req.1.host, req.1.uri);
-    let history_idx = req.0;
-    let set_highlights = req.3.clone();
-    let highlight_menu = PopupMenu::build(window, cx, move |mut menu, _, _| {
-        for (name, background, foreground) in COLORS {
-            let color_name = name.to_string();
-            let set_highlights = set_highlights.clone();
-            menu = menu.item(
-            PopupMenuItem::element(move |_, _| {
-                view! {
-                    <div
-                        class="flex flex-row w-full min-w-[150px] h-full items-center text-black bg-white"
-                        bg={gpui::rgba(background)}
-                        textColor={gpui::rgba(foreground)}
-                    >
-                        { color_name.clone() }
-                    </div>
-                }
-                .into_any_element()
+    let url = format!("https://{}{}", row.1.host, row.1.uri);
+    let index = row.0;
+    let highlight_menu = PopupMenu::build(window, cx, move |menu, _, _| {
+        COLORS
+            .iter()
+            .fold(menu, |menu, &(name, background, foreground)| {
+                menu.item(
+                    PopupMenuItem::element(move |_, _| {
+                        view! {
+                            <div
+                                class="flex flex-row w-full min-w-[150px] h-full items-center text-black bg-white"
+                                bg={gpui::rgba(background)}
+                                textColor={gpui::rgba(foreground)}
+                            >
+                                { name }
+                            </div>
+                        }
+                    })
+                    .on_click(move |_, _, cx| {
+                        highlights.update(|highlights| highlights.insert(index, (background, foreground)), cx);
+                    }),
+                )
             })
-            .on_click(move |_, _, cx| {
-                set_highlights.update(
-                    |highlights| {
-                        highlights.insert(history_idx, (background, foreground));
-                    },
-                    cx,
-                );
-            }),
-        );
-        }
-        let set_highlights = set_highlights.clone();
-        menu.item(PopupMenuItem::separator())
-            .item(
-                PopupMenuItem::new("Clear highlight").on_click(move |_, _, cx| {
-                    set_highlights.update(
-                        |highlights| {
-                            highlights.remove(&history_idx);
-                        },
-                        cx,
-                    );
-                }),
-            )
+            .item(PopupMenuItem::separator())
+            .item(PopupMenuItem::new("Clear highlight").on_click(move |_, _, cx| {
+                highlights.update(|highlights| highlights.remove(&index), cx);
+            }))
     });
     let dont_intercept_menu = PopupMenu::build(window, cx, |m, _, _| {
         m.item(PopupMenuItem::new("To this host"))
@@ -275,54 +237,30 @@ fn history_context_menu(
     .item(PopupMenuItem::separator())
     .item(
         PopupMenuItem::element(|window, cx| {
-            view! {
-            <ShortcutItem name={"Send to Intruder".to_string()} shortcut={"Ctrl+I".to_string()} />
-        }.into_any_element()
+            view! { <ShortcutItem name="Send to Intruder" shortcut="Ctrl+I" /> }
         })
         .on_click({
-            let req_row = req.1.clone();
-            let set_intruders = set_intruders.clone();
-            let set_app_tab = set_app_tab.clone();
-
-            let set_intruder_tab = set_intruder_tab.clone();
+            let request = row.1.clone();
             move |_, _, cx| {
-                let raw_req = format!(
+                let raw_request = format!(
                     "{} {} HTTP/1.1\r\nHost: {}\r\n\r\n",
-                    req_row.method, req_row.uri, req_row.host
+                    request.method, request.uri, request.host
                 );
-                let mut new_idx = 0;
-                set_intruders.update(
-                    |list| {
-                        list.push(intruder::state::IntruderState {
-                            req_id: list.len() + 1,
-                            target: req_row.host.clone(),
-                            raw_request: raw_req,
-                            update_host_header: true,
-                            rows: Vec::new(),
-                        });
-                        new_idx = list.len() - 1;
-                    },
-                    cx,
-                );
-                set_intruder_tab.set(new_idx, cx);
-                set_app_tab.set(components::AppTab::Intruder, cx);
+                intruders.update(|intruders| intruders.open(request.host.clone(), raw_request), cx);
+                app_tab.set(AppTab::Intruder, cx);
             }
         }),
     )
     .item(
         PopupMenuItem::element(|window, cx| {
-            view! {
-            <ShortcutItem name={"Send to Repeater".to_string()} shortcut={"Ctrl+R".to_string()} />
-        }.into_any_element()
+            view! { <ShortcutItem name="Send to Repeater" shortcut="Ctrl+R" /> }
         })
         .on_click(|_, _, _| println!("Repeater")),
     )
     .item(PopupMenuItem::new("Send to Sequencer"))
     .item(
         PopupMenuItem::element(|window, cx| {
-            view! {
-            <ShortcutItem name={"Send to Organizer".to_string()} shortcut={"Ctrl+O".to_string()} />
-        }.into_any_element()
+            view! { <ShortcutItem name="Send to Organizer" shortcut="Ctrl+O" /> }
         })
         .on_click(|_, _, _| println!("Organizer")),
     )
