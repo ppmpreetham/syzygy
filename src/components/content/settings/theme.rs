@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::str::from_utf8;
 use strum::{Display, EnumIter};
 use gpui_kit::gpui::WindowBackgroundAppearance;
-
+use crate::components::content::settings::config;
 use crate::backend::storage::dots_storage_path;
 
 #[derive(Deserialize, Serialize, EnumIter, Display, Default, Clone, Copy, PartialEq, Eq)]
@@ -32,22 +32,22 @@ pub enum WindowStyle {
     MicaAltBackdrop,
 }
 
-impl Into<WindowBackgroundAppearance> for WindowStyle {
-    fn into(self) -> WindowBackgroundAppearance {
-        match self {
-            Self::Opaque => WindowBackgroundAppearance::Opaque,
-            Self::Transparent => WindowBackgroundAppearance::Transparent,
-            Self::Blurred => WindowBackgroundAppearance::Blurred,
+impl From<WindowStyle> for WindowBackgroundAppearance {
+    fn from(val: WindowStyle) -> Self {
+        match val {
+            WindowStyle::Opaque => WindowBackgroundAppearance::Opaque,
+            WindowStyle::Transparent => WindowBackgroundAppearance::Transparent,
+            WindowStyle::Blurred => WindowBackgroundAppearance::Blurred,
             #[cfg(target_os = "windows")]
-            Self::MicaBackdrop => WindowBackgroundAppearance::MicaBackdrop,
+            WindowStyle::MicaBackdrop => WindowBackgroundAppearance::MicaBackdrop,
             #[cfg(target_os = "windows")]
-            Self::MicaAltBackdrop => WindowBackgroundAppearance::MicaAltBackdrop,
+            WindowStyle::MicaAltBackdrop => WindowBackgroundAppearance::MicaAltBackdrop,
         }
     }
 }
 
 pub fn effective_mode(cx: &App) -> GpuiThemeMode {
-    match cx.global::<crate::components::content::settings::config::Config>().theme_mode {
+    match cx.global::<config::Config>().theme_mode {
         ThemeMode::Light => GpuiThemeMode::Light,
         ThemeMode::Dark => GpuiThemeMode::Dark,
         ThemeMode::System => cx.window_appearance().into(),
@@ -77,7 +77,7 @@ fn load_bundled_themes(cx: &mut App) {
 pub fn theme_init(cx: &mut App) -> Result<()> {
     load_bundled_themes(cx);
 
-    let cfg = cx.global::<crate::components::content::settings::config::Config>();
+    let cfg = cx.global::<config::Config>();
     let light_name = cfg.light_theme_name.clone();
     let dark_name = cfg.dark_theme_name.clone();
     let reg = ThemeRegistry::global(cx);
@@ -105,4 +105,3 @@ pub fn theme_init(cx: &mut App) -> Result<()> {
     }
     Ok(())
 }
-

@@ -4,7 +4,7 @@ use gpui::WindowBounds;
 use gpui::px;
 use gpui::size;
 use gpui_kit::assets::IconName;
-use gpui_kit::component::Icon;
+use gpui_kit::component::{Icon};
 use gpui_kit::component::Sizable;
 use gpui_kit::component::sidebar::SidebarCollapsible;
 use gpui_kit::gpui;
@@ -78,4 +78,3 @@ pub fn app_sidebar(collapsed: bool, active_tab: Signal<AppTab>) {
         </Sidebar>
     }
 }
-

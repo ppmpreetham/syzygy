@@ -11,7 +11,7 @@ enum InspectorTab {
 
 #[component]
 pub(super) fn inspector(request: String) {
-    _ = request;
+    _ = request; // TODO
     let (active_tab, set_active_tab) = use_state(InspectorTab::Inspect);
 
     view! {
