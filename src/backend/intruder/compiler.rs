@@ -6,7 +6,7 @@ pub struct CompiledSegments {
 
 impl CompiledSegments{
   // stores irreplaceable chars in ram once
-  pub fn compile(req: &str) -> Self{
+  pub fn compile(req: &str) -> Self {
     let mut segments: Vec<Vec<u8>> = Vec::new();
     let mut idx = 0usize;
     let sections = sectioner(req).unwrap_or_default();
@@ -14,13 +14,13 @@ impl CompiledSegments{
     for section in sections{
       let st = section.start - GRAPHEME_LEN;
       if st > idx{
-        segments.push(req[idx..st].as_bytes().to_vec());
+        segments.push(req.as_bytes()[idx..st].to_vec());
       }
       idx = section.end + GRAPHEME_LEN;
     }
 
     if idx < req.len(){
-      segments.push(req[idx..].as_bytes().to_vec());
+      segments.push(req.as_bytes()[idx..].to_vec());
     }
 
     Self {segments}
