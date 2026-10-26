@@ -1,7 +1,7 @@
 use reqwest::{Client, Method, Response, header::HeaderMap};
 use anyhow::{Context, Result};
 use std::sync::Arc;
-use tokio::{sync::mpsc, sync::Semaphore, time::Instant};
+use tokio::{sync::{Semaphore, mpsc}, task::JoinSet, time::Instant};
 use futures::future::join_all;
 use bytes::Bytes;
 
@@ -22,13 +22,4 @@ async fn send_url(client: &Client, url: URL<'_>) -> Result<Response> {
         .send()
         .await
         .context("failed to execute request")
-}
-
-
-#[tokio::main]
-pub async fn request_sender() -> Result<()> {
-  let start_time = Instant::now();
-  // todo: make it the size of the payloads later
-  // let (tx, mut rx) = mpsc::channel(100);
-  todo!()
 }
